@@ -20,27 +20,33 @@ import org.osmdroid.views.overlay.OverlayItem
 import android.location.LocationManager
 import android.location.LocationListener
 import android.content.pm.PackageManager
+import android.widget.Button
 import kotlinx.android.synthetic.main.activity_main.*
 
 
 class MapFragment : Fragment(), LocationListener {
-
-    val mv = map1 as MapView
-    val mvController = mv.controller
     lateinit var items: ItemizedIconOverlay<OverlayItem>
-
     private var listener: OnFragmentInteractionListener? = null
+    lateinit var mv: MapView
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Configuration.getInstance().load(getContext(), PreferenceManager.getDefaultSharedPreferences(getContext()))
+
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+         val fragView = inflater.inflate(R.layout.fragment_map, container, false)
 
+        Configuration.getInstance().load(activity, PreferenceManager.getDefaultSharedPreferences(activity))
+
+        val map = fragView.findViewById(R.id.map1) as MapView
+
+        mv = map
 
         mapInit()
-        return inflater.inflate(R.layout.fragment_map, container, false)
+        return fragView
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -62,32 +68,13 @@ class MapFragment : Fragment(), LocationListener {
         listener = null
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     *
-     *
-     * See the Android Training lesson [Communicating with Other Fragments]
-     * (http://developer.android.com/training/basics/fragments/communicating.html)
-     * for more information.
-     */
+
     interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         fun onFragmentInteraction(uri: Uri)
     }
 
     companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment MapFragment.
-         */
-        // TODO: Rename and change types and number of parameters
         @JvmStatic
         fun newInstance() = MapFragment()
     }
@@ -97,6 +84,7 @@ class MapFragment : Fragment(), LocationListener {
         mv.setBuiltInZoomControls(true)
         mv.setMultiTouchControls(true)
 
+        val mvController = mv.controller
         mvController.setZoom(16)
         mvController.setCenter(GeoPoint( 50.909698, -1.404351))
 
@@ -106,21 +94,22 @@ class MapFragment : Fragment(), LocationListener {
 
     override fun onLocationChanged(newLoc: Location) {
 
-        items = ItemizedIconOverlay<OverlayItem>(getContext(), arrayListOf<OverlayItem>(),null)
+        items = ItemizedIconOverlay<OverlayItem>(activity, arrayListOf<OverlayItem>(),null)
+        val mvController = mv.controller
         mvController.setZoom(16)
-        mvController.setCenter(GeoPoint(newLoc.latitude, newLoc.longitude));
+        mvController.setCenter(GeoPoint(newLoc.latitude, newLoc.longitude))
     }
 
     override fun onProviderDisabled(provider: String) {
         Toast.makeText(
-            getActivity(), "Provider " + provider +
+            activity, "Provider " + provider +
                     " disabled", Toast.LENGTH_LONG
         ).show()
     }
 
     override fun onProviderEnabled(provider: String) {
         Toast.makeText(
-            getActivity(), "Provider " + provider +
+            activity, "Provider " + provider +
                     " enabled", Toast.LENGTH_LONG
         ).show()
     }
@@ -128,7 +117,7 @@ class MapFragment : Fragment(), LocationListener {
     override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {
 
         Toast.makeText(
-            getActivity(), "Status changed: $status",
+            activity, "Status changed: $status",
             Toast.LENGTH_LONG
         ).show()
     }
