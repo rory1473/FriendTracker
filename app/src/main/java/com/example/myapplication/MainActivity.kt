@@ -19,14 +19,29 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import android.preference.PreferenceManager
 import android.util.Log
+import android.widget.Button
 import org.osmdroid.views.overlay.ItemizedIconOverlay
 import org.osmdroid.views.overlay.OverlayItem
 import com.google.android.material.bottomnavigation.BottomNavigationView.OnNavigationItemSelectedListener
+import com.google.firebase.database.FirebaseDatabase
+import android.view.LayoutInflater
+import com.google.firebase.ktx.Firebase
+import kotlinx.android.synthetic.main.fragment_home.*
 
 
-class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.OnFragmentInteractionListener, MapFragment.OnFragmentInteractionListener, MessageFragment.OnFragmentInteractionListener {
+class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFragmentListener, MapFragment.OnFragmentInteractionListener, MessageFragment.OnFragmentInteractionListener {
 
     private val fm = supportFragmentManager
+
+    var session = ""
+    var name = ""
+    var lat = 0.0
+    var long = 0.0
+    var updateID = ""
+
+
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,9 +54,26 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.OnFragm
 
         Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
 
+
     }
 
+    private fun saveUser(){
+        val ref = FirebaseDatabase.getInstance().getReference("user")
+        val userID = ref.push().key.toString()
+        val user = User(userID, name, session, lat, long)
+        ref.child(userID).setValue(user).addOnCompleteListener{
+            Toast.makeText(this, "User Session Started",Toast.LENGTH_LONG).show()
+        }
+        updateID = userID
+    }
 
+    override fun detailsEntered(homeName: String, homeSession: String){
+        name = homeName
+        session = homeSession
+        Log.i("name", name)
+        Log.i("session", session)
+        saveUser()
+    }
 
 
 
@@ -76,6 +108,7 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.OnFragm
         transaction.replace(R.id.page_fragment, fragment)
         transaction.addToBackStack(null)
         transaction.commit()
+
     }
 
     private fun showMapFragment() {
@@ -119,6 +152,15 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.OnFragm
 
         Log.i("latitude", newLoc.latitude.toString())
         Log.i("longitude", newLoc.longitude.toString())
+
+        lat = newLoc.latitude
+        long = newLoc.longitude
+
+        if (updateID != "") {
+            val ref = FirebaseDatabase.getInstance().getReference("user")
+            val user = User(updateID, name, session, lat, long)
+            ref.child(updateID).setValue(user)
+        }
     }
     override fun onProviderDisabled(provider: String) {
         Toast.makeText(

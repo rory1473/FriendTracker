@@ -8,35 +8,52 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
+import android.widget.TextView
 import kotlinx.android.synthetic.main.fragment_home.*
 
 class HomeFragment : Fragment() {
 
-    private var listener: OnFragmentInteractionListener? = null
+    private var listener: HomeFragmentListener? = null
+    var sessionID = ""
+    var name = ""
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-
-    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
        val fragView = inflater.inflate(R.layout.fragment_home, container, false)
+        val random = fragView.findViewById<TextView>(R.id.random) as TextView
+        val etName = fragView.findViewById<EditText>(R.id.etName) as EditText
+
+        createSessionID(random)
         val btn1 = fragView.findViewById(R.id.btn1) as Button
 
         btn1.setOnClickListener {
-            random()
-        }
+            name = etName.text.toString()
+            if (name.isEmpty()){
+                etName.error = "Please Enter a Name"
+            }else{
+                listener?.detailsEntered(name, sessionID)
 
+            }
+        }
 
         return fragView
     }
 
-    private fun random() {
-        val stringLibrary = ('0'..'z').toList().toTypedArray()
-        val password = (1..32).map { stringLibrary.random() }.joinToString("")
 
-        random.text = password
+
+    private fun createSessionID(random: TextView) {
+        val stringLibrary = ('a'..'z').toList().toTypedArray()
+        sessionID = (1..6).map { stringLibrary.random() }.joinToString("")
+
+        random.text = sessionID
+    }
+
+
+
+    interface HomeFragmentListener {
+        fun detailsEntered(homeName: String, homeSession: String )
+
     }
 
 
@@ -44,10 +61,10 @@ class HomeFragment : Fragment() {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (context is OnFragmentInteractionListener) {
+        if (context is HomeFragmentListener) {
             listener = context
         } else {
-            throw RuntimeException(context.toString() + " must implement OnFragmentInteractionListener")
+            throw RuntimeException(context.toString() + " must implement HomeFragmentListener")
         }
     }
 
@@ -57,10 +74,6 @@ class HomeFragment : Fragment() {
     }
 
 
-    interface OnFragmentInteractionListener {
-
-        fun onFragmentInteraction(uri: Uri)
-    }
 
     companion object {
 
