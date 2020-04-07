@@ -1,7 +1,6 @@
-package com.example.myapplication
+package com.example.myapplication.fragments
 
 import android.content.Context
-import android.net.Uri
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -10,13 +9,15 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import com.example.myapplication.R
 import kotlinx.android.synthetic.main.fragment_home.*
 
 class HomeFragment : Fragment() {
 
     private var listener: HomeFragmentListener? = null
-    var sessionID = ""
+    var newSessionID = ""
     var name = ""
+    var session = ""
 
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -26,14 +27,25 @@ class HomeFragment : Fragment() {
 
         createSessionID(random)
         val btn1 = fragView.findViewById(R.id.btn1) as Button
+        val btn2 = fragView.findViewById(R.id.btn2) as Button
 
         btn1.setOnClickListener {
             name = etName.text.toString()
             if (name.isEmpty()){
                 etName.error = "Please Enter a Name"
             }else{
-                listener?.detailsEntered(name, sessionID)
-
+                listener?.detailsEntered(name, newSessionID)
+                    btn1.isEnabled = false
+            }
+        }
+        btn2.setOnClickListener {
+            name = etName.text.toString()
+            session = etSession.text.toString()
+            if (name.isEmpty()){
+                etName.error = "Please Enter a Name"
+            }else{
+                listener?.detailsEntered(name, session)
+                btn2.isEnabled = false
             }
         }
 
@@ -44,9 +56,9 @@ class HomeFragment : Fragment() {
 
     private fun createSessionID(random: TextView) {
         val stringLibrary = ('a'..'z').toList().toTypedArray()
-        sessionID = (1..6).map { stringLibrary.random() }.joinToString("")
+        newSessionID = (1..6).map { stringLibrary.random() }.joinToString("")
 
-        random.text = sessionID
+        random.text = newSessionID
     }
 
 

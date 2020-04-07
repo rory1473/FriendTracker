@@ -5,28 +5,19 @@ import android.net.Uri
 import android.os.Bundle
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
-import android.widget.TextView
 import android.location.LocationManager
 import android.location.LocationListener
 import android.location.Location
 import android.content.Context
 import android.content.pm.PackageManager
-import android.view.View
 import android.widget.Toast
-import kotlinx.android.synthetic.main.activity_main.*
-import org.osmdroid.config.Configuration
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.MapView
-import android.preference.PreferenceManager
 import android.util.Log
-import android.widget.Button
-import org.osmdroid.views.overlay.ItemizedIconOverlay
-import org.osmdroid.views.overlay.OverlayItem
+import com.example.myapplication.datamodel.User
 import com.google.android.material.bottomnavigation.BottomNavigationView.OnNavigationItemSelectedListener
 import com.google.firebase.database.FirebaseDatabase
-import android.view.LayoutInflater
-import com.google.firebase.ktx.Firebase
-import kotlinx.android.synthetic.main.fragment_home.*
+import com.example.myapplication.fragments.HomeFragment
+import com.example.myapplication.fragments.MapFragment
+import com.example.myapplication.fragments.MessageFragment
 
 
 class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFragmentListener, MapFragment.OnFragmentInteractionListener, MessageFragment.OnFragmentInteractionListener {
@@ -35,12 +26,9 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFra
 
     var session = ""
     var name = ""
-    var lat = 0.0
-    var long = 0.0
+    var lat = ""
+    var long = ""
     var updateID = ""
-
-
-
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,10 +38,9 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFra
         val navView: BottomNavigationView = findViewById(R.id.nav_view)
         navView.setOnNavigationItemSelectedListener(onNavigationItemSelectedListener)
 
+
+
         showHomeFragment()
-
-        Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
-
 
     }
 
@@ -73,6 +60,8 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFra
         Log.i("name", name)
         Log.i("session", session)
         saveUser()
+        val mapFragment = MapFragment()
+        mapFragment.updateSession(session)
     }
 
 
@@ -153,8 +142,8 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFra
         Log.i("latitude", newLoc.latitude.toString())
         Log.i("longitude", newLoc.longitude.toString())
 
-        lat = newLoc.latitude
-        long = newLoc.longitude
+        var lat = newLoc.latitude.toString()
+        var long = newLoc.longitude.toString()
 
         if (updateID != "") {
             val ref = FirebaseDatabase.getInstance().getReference("user")
