@@ -1,6 +1,8 @@
 package com.example.myapplication
 
 import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.net.Uri
 import android.os.Bundle
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -10,6 +12,7 @@ import android.location.LocationListener
 import android.location.Location
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import android.widget.Toast
 import android.util.Log
 import com.example.myapplication.datamodel.User
@@ -18,12 +21,15 @@ import com.google.firebase.database.FirebaseDatabase
 import com.example.myapplication.fragments.HomeFragment
 import com.example.myapplication.fragments.MapFragment
 import com.example.myapplication.fragments.MessageFragment
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.iid.FirebaseInstanceId
+import com.google.firebase.messaging.FirebaseMessaging
 
 
 class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFragmentListener, MapFragment.OnFragmentInteractionListener, MessageFragment.OnFragmentInteractionListener {
 
+    private val TAG = "MainActivity"
     private val fm = supportFragmentManager
-
     var session = ""
     var name = ""
     var lat = ""
@@ -38,11 +44,43 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFra
         val navView: BottomNavigationView = findViewById(R.id.nav_view)
         navView.setOnNavigationItemSelectedListener(onNavigationItemSelectedListener)
 
-
-
         showHomeFragment()
 
+        val channelId = getString(R.string.notification_channel_id)
+        val channelName = getString(R.string.notification_channel_name)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val channel = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH)
+                channel.enableLights(true)
+                channel.enableVibration(true)
+            notificationManager.createNotificationChannel(channel)
+        }
+
+
+        FirebaseInstanceId.getInstance().instanceId
+            .addOnCompleteListener(OnCompleteListener { task ->
+                if (!task.isSuccessful) {
+                    Log.w("main", "getInstanceId failed", task.exception)
+                    return@OnCompleteListener
+                }
+
+                // Get new Instance ID token
+                val token = task.result?.token
+
+                // Log and toast
+                val msg = getString(R.string.msg_token, token).toString()
+                Log.d("main", msg)
+                Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
+            })
+
+
+
+
     }
+
+
+
+
 
     private fun saveUser(){
         val ref = FirebaseDatabase.getInstance().getReference("user")
@@ -60,8 +98,25 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFra
         Log.i("name", name)
         Log.i("session", session)
         saveUser()
+
         val mapFragment = MapFragment()
-        mapFragment.updateSession(session)
+        val args = Bundle()
+        args.putString("session", session)
+        mapFragment.arguments = args
+        val transaction = fm.beginTransaction()
+        transaction.replace(R.id.page_fragment, mapFragment)
+        transaction.addToBackStack(null)
+        transaction.commit()
+
+        FirebaseMessaging.getInstance().subscribeToTopic(session)
+            .addOnCompleteListener { task ->
+                var msg = "connected to group"
+                if (!task.isSuccessful) {
+                    msg = "failed to connect to group"
+                }
+                Log.d(TAG, msg)
+                Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
+            }
     }
 
 
@@ -101,9 +156,12 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFra
     }
 
     private fun showMapFragment() {
+        val mapFragment = MapFragment()
+        val args = Bundle()
+        args.putString("session", session)
+        mapFragment.arguments = args
         val transaction = fm.beginTransaction()
-        val fragment = MapFragment.newInstance()
-        transaction.replace(R.id.page_fragment, fragment)
+        transaction.replace(R.id.page_fragment, mapFragment)
         transaction.addToBackStack(null)
         transaction.commit()
     }
@@ -130,20 +188,20 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFra
             checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)==PackageManager.PERMISSION_GRANTED &&
             checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)==PackageManager.PERMISSION_GRANTED){
             val mgr = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            mgr.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, this);
+            mgr.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, this)
         }
         else{
-            requestPermissions(arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE ), 0)
+            requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE ), 0)
         }
     }
 
     override fun onLocationChanged(newLoc: Location) {
 
-        Log.i("latitude", newLoc.latitude.toString())
-        Log.i("longitude", newLoc.longitude.toString())
+        //Log.i("latitude", newLoc.latitude.toString())
+        //Log.i("longitude", newLoc.longitude.toString())
 
-        var lat = newLoc.latitude.toString()
-        var long = newLoc.longitude.toString()
+        val lat = newLoc.latitude.toString()
+        val long = newLoc.longitude.toString()
 
         if (updateID != "") {
             val ref = FirebaseDatabase.getInstance().getReference("user")

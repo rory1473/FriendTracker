@@ -34,10 +34,10 @@ class MapFragment : Fragment(), Observer {
     lateinit var mv: MapView
 
     val ref = FirebaseDatabase.getInstance().getReference("user")
+
     var session = ""
-    var lat = 50.909698
-    var long = -1.404351
-    var curLocation = OverlayItem("User Location", "You are Here", GeoPoint(lat, long))
+
+
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
          val fragView = inflater.inflate(R.layout.fragment_map, container, false)
@@ -47,6 +47,9 @@ class MapFragment : Fragment(), Observer {
         val map = fragView.findViewById(R.id.map1) as MapView
         mv = map
 
+        val arg = arguments
+        session = arg!!.getString("session")!!
+
         markerInit()
         mapInit()
 
@@ -55,12 +58,6 @@ class MapFragment : Fragment(), Observer {
 
         return fragView
     }
-
-
-    fun updateSession(newSession: String){
-        session = newSession
-    }
-
 
     private fun mapInit(){
 
@@ -87,31 +84,33 @@ class MapFragment : Fragment(), Observer {
                 return true
             }
         }
-        items = ItemizedIconOverlay<OverlayItem>(activity, ArrayList<OverlayItem>(), markerGestureListener)
 
-        val drawable = getDrawable(context!!, R.drawable.user_marker)
-        curLocation.setMarker(drawable)
-        items.addItem(curLocation)
-        mv.overlays.add(items)
+
     }
 
 
 
     override fun update(o: Observable?, arg: Any?) {
         data = UserModel.getData()!!
+        items = ItemizedIconOverlay<OverlayItem>(activity, ArrayList<OverlayItem>(), markerGestureListener)
+        mv.overlays.clear()
+        Log.i("MMMMGGG", "session is " + session)
 
             for (userData in data) {
-                Log.i("AAAA", userData.name)
+                val curSession = userData.session
+                if(curSession == session) {
+                    Log.i("AAAA", userData.name)
 
-                val curName = userData.name
-                val curLat = userData.lat.toDouble()
-                val curLong = userData.long.toDouble()
+                    val curName = userData.name
+                    val curLat = userData.lat.toDouble()
+                    val curLong = userData.long.toDouble()
 
-                val curLocation = OverlayItem(curName, "You are Here", GeoPoint(curLat, curLong))
-                val drawable = getDrawable(context!!, R.drawable.user_marker)
-                curLocation.setMarker(drawable)
-                items.addItem(curLocation)
-                mv.overlays.add(items)
+                    val curLocation = OverlayItem(curName, curName, GeoPoint(curLat, curLong))
+                    val drawable = getDrawable(context!!, R.drawable.user_marker)
+                    curLocation.setMarker(drawable)
+                    items.addItem(curLocation)
+                    mv.overlays.add(items)
+                }
 
 
             }
@@ -146,28 +145,29 @@ class MapFragment : Fragment(), Observer {
 
 
 
-override fun onAttach(context: Context) {
-    super.onAttach(context)
-    if (context is OnFragmentInteractionListener) {
-        listener = context
-    } else {
-        throw RuntimeException(context.toString() + " must implement OnFragmentInteractionListener")
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if (context is OnFragmentInteractionListener) {
+            listener = context
+        } else {
+            throw RuntimeException(context.toString() + " must implement OnFragmentInteractionListener")
+        }
     }
-}
 
-override fun onDetach() {
-    super.onDetach()
-    listener = null
-}
+    override fun onDetach() {
+        super.onDetach()
+        listener = null
+    }
 
 
-interface OnFragmentInteractionListener {
+    interface OnFragmentInteractionListener {
 
-    fun onFragmentInteraction(uri: Uri)
-}
+        fun onFragmentInteraction(uri: Uri)
+    }
 
-companion object {
-    @JvmStatic
-    fun newInstance() = MapFragment()
-}
+    companion object {
+
+        @JvmStatic
+       fun newInstance() = MapFragment()
+    }
 }
