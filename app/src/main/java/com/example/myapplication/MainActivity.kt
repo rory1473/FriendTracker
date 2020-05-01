@@ -11,19 +11,28 @@ import android.location.LocationManager
 import android.location.LocationListener
 import android.location.Location
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.Toast
 import android.util.Log
+import androidx.lifecycle.lifecycleScope
 import com.example.myapplication.datamodel.User
 import com.google.android.material.bottomnavigation.BottomNavigationView.OnNavigationItemSelectedListener
 import com.google.firebase.database.FirebaseDatabase
 import com.example.myapplication.fragments.HomeFragment
 import com.example.myapplication.fragments.MapFragment
 import com.example.myapplication.fragments.MessageFragment
+import com.example.myapplication.messaging.MessageDatabase
+import com.example.myapplication.messaging.MyFirebaseMessagingService
+import com.example.myapplication.messaging.Session
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.iid.FirebaseInstanceId
 import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.IOException
 
 
 class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFragmentListener, MapFragment.OnFragmentInteractionListener, MessageFragment.OnFragmentInteractionListener {
@@ -35,6 +44,8 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFra
     var lat = ""
     var long = ""
     var updateID = ""
+    private lateinit var db: MessageDatabase
+    private var sessionList = listOf<Session>()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,6 +56,35 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFra
         navView.setOnNavigationItemSelectedListener(onNavigationItemSelectedListener)
 
         showHomeFragment()
+
+        Thread(Runnable {
+            run{
+                try {
+                    FirebaseInstanceId.getInstance().deleteInstanceId()
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                }
+            }
+        }).start()
+
+        db = MessageDatabase.getDatabase(application)
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                sessionList = db.messageDAO().getSession()
+            }
+            var sessionID: Int? = null
+            withContext(Dispatchers.IO) {
+                if (sessionList != null) {
+                    for (data in sessionList) {
+                    sessionID = db.messageDAO().deleteSession(data)
+                }}
+            }
+            var sessionID2: Long? = null
+            val newSession = Session(id = 1, curSession = "")
+            withContext(Dispatchers.IO) {
+                sessionID2 = db.messageDAO().insertSession(newSession)
+            }
+        }
 
         val channelId = getString(R.string.notification_channel_id)
         val channelName = getString(R.string.notification_channel_name)
@@ -92,7 +132,7 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFra
         updateID = userID
     }
 
-    override fun detailsEntered(homeName: String, homeSession: String){
+    override fun detailsEntered(homeName: String, homeSession: String) {
         name = homeName
         session = homeSession
         Log.i("name", name)
@@ -117,7 +157,33 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFra
                 Log.d(TAG, msg)
                 Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
             }
+
+        var sessionObject: Session? = null
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                sessionObject = db.messageDAO().getSessionByID(1)
+            }
+            //checks if image exists and then sets the new album value and sends update query to database
+            if (sessionObject != null) {
+                sessionObject!!.curSession = session
+                var photoID: Int? = null
+                withContext(Dispatchers.IO) {
+                    photoID = db.messageDAO().updateSession(sessionObject!!)
+
+                }
+            }
+
+
+            //val intent = Intent(this, MyFirebaseMessagingService::class.java)
+            //intent.putExtra("session", session)
+            //startService(intent)
+
+
+        }
     }
+
+
+
 
 
 
@@ -169,6 +235,10 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFra
     private fun showMessageFragment() {
         val transaction = fm.beginTransaction()
         val fragment = MessageFragment.newInstance()
+        val args = Bundle()
+        args.putString("name", name)
+        args.putString("session", session)
+        fragment.arguments = args
         transaction.replace(R.id.page_fragment, fragment)
         transaction.addToBackStack(null)
         transaction.commit()
