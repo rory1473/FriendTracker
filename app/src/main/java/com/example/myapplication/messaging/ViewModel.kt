@@ -5,7 +5,9 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
-
+import com.example.myapplication.messaging.Message
+import com.example.myapplication.messaging.Session
+import com.example.myapplication.messaging.MessageDatabase
 
 class ViewModel(app: Application): AndroidViewModel(app) {
 
@@ -14,11 +16,12 @@ class ViewModel(app: Application): AndroidViewModel(app) {
     private var messages: LiveData<List<Message>>
     //private var images: LiveData<List<Session>>
     private var session:  LiveData<Session>
+    //private var curSession = ""
 
     init {
         //variables are assigned to DAO functions
         //albums = db.messageDAO().getAllAlbumsLive()
-        messages = db.messageDAO().getAllMessagesLive()
+        messages = db.messageDAO().getMessagesLive()
         session = db.messageDAO().getSessionByIDLive(1)
     }
 
@@ -26,7 +29,7 @@ class ViewModel(app: Application): AndroidViewModel(app) {
         return session
     }
 
-    fun getAllMessagesLive(): LiveData<List<Message>> {
+    fun getMessagesLive(): LiveData<List<Message>> {
         return messages
     }
 

@@ -15,8 +15,8 @@ interface MessageDAO {
     @Query("SELECT * FROM messages")
     fun getAllImages(): List<Message>
 
-    @Query("SELECT * FROM messages WHERE session=:session")
-    fun getMessagesLive(session: String): LiveData<List<Message>>
+    @Query("SELECT * FROM messages")
+    fun getMessagesLive(): LiveData<List<Message>>
 
     @Insert
     fun insert(images: Message) : Long

@@ -15,7 +15,7 @@ import android.app.DownloadManager
 import android.content.ContentValues.TAG
 import android.util.Log
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModel
+
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -24,6 +24,9 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.example.myapplication.messaging.Message
 import com.example.myapplication.messaging.MessageDatabase
+import com.example.myapplication.messaging.MessageRecyclerViewAdapter
+import com.example.myapplication.messaging.ViewModel
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.database.FirebaseDatabase
 import org.json.JSONException
 
@@ -51,7 +54,7 @@ class MessageFragment : Fragment() {
         user = arg!!.getString("name")!!
         session = arg.getString("session")!!
 
-        val sendBtn = fragView.findViewById(R.id.send_btn) as Button
+        val sendBtn = fragView.findViewById(R.id.send_btn) as FloatingActionButton
         sendBtn.setOnClickListener {
             val editText = fragView.findViewById(R.id.text1) as EditText
             message = editText.text.toString()
@@ -121,8 +124,8 @@ class MessageFragment : Fragment() {
             messageList = it
             //send list of albums to recycler adapter
             Log.i(TAG, messageList.toString())
-            recyclerView.layoutManager = LinearLayoutManager(activity1)
-            val recyclerViewAdapter = MessageRecyclerViewAdapter(context!!, messageList)
+            recyclerView.layoutManager = LinearLayoutManager(context)
+            val recyclerViewAdapter = MessageRecyclerViewAdapter(context!!, messageList, session)
             recyclerView.adapter = recyclerViewAdapter
         })
     }

@@ -2,13 +2,13 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
              xmlns:tools="http://schemas.android.com/tools"
              android:layout_width="match_parent"
-             android:layout_height="match_parent"
+             android:layout_height="match_parent" xmlns:app="http://schemas.android.com/apk/res-auto"
              tools:context=".fragments.MapFragment">
 
-    <TextView
+    <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="map fragment"/>
+            android:layout_height="match_parent">
+
 
     <org.osmdroid.views.MapView
             android:id="@+id/map1"
@@ -18,4 +18,18 @@
             android:clickable="true"
             android:enabled="true" />
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/camera_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:fabSize="normal"
+            android:src="@drawable/ic_camera_alt_black_24dp"
+            android:layout_alignParentBottom="true"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginBottom="85dp"
+            android:layout_centerHorizontal="true"
+            app:backgroundTint="@android:color/white"/>
+    </RelativeLayout>
 </FrameLayout>

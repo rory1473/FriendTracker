@@ -51,6 +51,7 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFra
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        supportActionBar!!.hide()
 
         val navView: BottomNavigationView = findViewById(R.id.nav_view)
         navView.setOnNavigationItemSelectedListener(onNavigationItemSelectedListener)
