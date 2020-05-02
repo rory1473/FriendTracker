@@ -14,10 +14,16 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Environment
+import android.util.Base64
 import android.widget.Toast
 import android.util.Log
+import android.view.LayoutInflater
+import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
+import com.example.myapplication.datamodel.Photo
 import com.example.myapplication.datamodel.User
+import com.example.myapplication.fragments.CameraFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView.OnNavigationItemSelectedListener
 import com.google.firebase.database.FirebaseDatabase
 import com.example.myapplication.fragments.HomeFragment
@@ -29,13 +35,15 @@ import com.example.myapplication.messaging.Session
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.iid.FirebaseInstanceId
 import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.android.synthetic.main.permission_required.view.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.io.IOException
 
 
-class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFragmentListener, MapFragment.OnFragmentInteractionListener, MessageFragment.OnFragmentInteractionListener {
+class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFragmentListener, CameraFragment.CameraFragmentListener, MapFragment.OnFragmentInteractionListener, MessageFragment.OnFragmentInteractionListener {
 
     private val TAG = "MainActivity"
     private val fm = supportFragmentManager
@@ -55,6 +63,9 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFra
 
         val navView: BottomNavigationView = findViewById(R.id.nav_view)
         navView.setOnNavigationItemSelectedListener(onNavigationItemSelectedListener)
+
+        val path = File(Environment.getExternalStorageDirectory().toString()+"/skiApp")
+        path.mkdirs()
 
         showHomeFragment()
 
@@ -140,6 +151,15 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFra
         Log.i("session", session)
         saveUser()
 
+        //val mapFragment = MapFragment()
+        //val messageFragment = MessageFragment.newInstance()
+        //val transaction = fm.beginTransaction()
+        //transaction.add(R.id.page_fragment, mapFragment)
+        //transaction.add(R.id.page_fragment, messageFragment)
+        //    .hide(mapFragment)
+        //    .hide(messageFragment)
+        //    .commit()
+
         val mapFragment = MapFragment()
         val args = Bundle()
         args.putString("session", session)
@@ -173,17 +193,20 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFra
 
                 }
             }
-
-
-            //val intent = Intent(this, MyFirebaseMessagingService::class.java)
-            //intent.putExtra("session", session)
-            //startService(intent)
-
-
         }
     }
 
 
+    override fun photoInterface(newPhoto: ByteArray) {
+        val encodedImage = Base64.encodeToString(newPhoto , Base64.DEFAULT)
+
+        val ref = FirebaseDatabase.getInstance().getReference("photo")
+        val photoID = ref.push().key.toString()
+        val photo = Photo(photoID, name, encodedImage, session, lat, long)
+        ref.child(photoID).setValue(photo).addOnCompleteListener{
+            Toast.makeText(this, "Photo Uploaded",Toast.LENGTH_LONG).show()
+        }
+    }
 
 
 
@@ -246,33 +269,13 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFra
     }
 
 
-
-    override fun onStart() {
-        super.onStart()
-        getLocation()
-    }
-
-
-    private fun getLocation(){
-
-        if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_GRANTED &&
-            checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)==PackageManager.PERMISSION_GRANTED &&
-            checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)==PackageManager.PERMISSION_GRANTED){
-            val mgr = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            mgr.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, this)
-        }
-        else{
-            requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE ), 0)
-        }
-    }
-
     override fun onLocationChanged(newLoc: Location) {
 
         //Log.i("latitude", newLoc.latitude.toString())
         //Log.i("longitude", newLoc.longitude.toString())
 
-        val lat = newLoc.latitude.toString()
-        val long = newLoc.longitude.toString()
+        lat = newLoc.latitude.toString()
+        long = newLoc.longitude.toString()
 
         if (updateID != "") {
             val ref = FirebaseDatabase.getInstance().getReference("user")
@@ -302,14 +305,47 @@ class MainActivity : AppCompatActivity(), LocationListener, HomeFragment.HomeFra
         ).show()
     }
 
+
+    override fun onStart() {
+        super.onStart()
+        getPermissions()
+    }
+
+    private fun getPermissions(){
+        //check all permissions are granted and request location
+        if(checkSelfPermission(Manifest.permission.CAMERA)== PackageManager.PERMISSION_GRANTED &&
+            checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)== PackageManager.PERMISSION_GRANTED &&
+            checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)== PackageManager.PERMISSION_GRANTED&&
+            checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_GRANTED){
+            val mgr = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            mgr.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, this)
+        }
+        else{
+            //request permissions
+            requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE ), 0)
+        }
+    }
+
+
     override fun onRequestPermissionsResult(requestCode:Int, permissions:Array<String>, grantResults: IntArray) {
+        //if all permissions are granted call getPermissions, otherwise alert user and loop back to getPermissions until user grants permissions
         when(requestCode) {
             0 -> {
-                if(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED && grantResults[2] == PackageManager.PERMISSION_GRANTED) {
-                    getLocation()
+                if(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED && grantResults[2] == PackageManager.PERMISSION_GRANTED && grantResults[3] == PackageManager.PERMISSION_GRANTED) {
+                    getPermissions()
 
                 } else {
-                    Toast.makeText(this, "Location, file read and file write permissions required to use this app", Toast.LENGTH_LONG).show();
+                    val dialogView = LayoutInflater.from(this).inflate(R.layout.permission_required, null)
+                    val builder = AlertDialog.Builder(this)
+                        .setView(dialogView)
+                        .setTitle("Permissions Needed")
+                        .setMessage("You have denied permissions that are required to use this app, to use the app please grant them")
+                        .setCancelable(false)
+                    val alert = builder.show()
+                    dialogView.ok_btn.setOnClickListener {
+                        alert.dismiss()
+                        getPermissions()
+                    }
                 }
             }
         }

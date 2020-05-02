@@ -10,6 +10,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import com.example.myapplication.R
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.android.synthetic.main.fragment_home.*
 
 class HomeFragment : Fragment() {
@@ -24,6 +25,9 @@ class HomeFragment : Fragment() {
        val fragView = inflater.inflate(R.layout.fragment_home, container, false)
         val random = fragView.findViewById<TextView>(R.id.random) as TextView
         val etName = fragView.findViewById<EditText>(R.id.etName) as EditText
+
+        val bottomNavigationView = activity!!.findViewById(R.id.nav_view) as BottomNavigationView
+        bottomNavigationView.visibility = View.VISIBLE
 
         createSessionID(random)
         val btn1 = fragView.findViewById(R.id.btn1) as Button

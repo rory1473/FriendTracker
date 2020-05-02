@@ -26,6 +26,7 @@ import com.example.myapplication.messaging.Message
 import com.example.myapplication.messaging.MessageDatabase
 import com.example.myapplication.messaging.MessageRecyclerViewAdapter
 import com.example.myapplication.messaging.ViewModel
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.database.FirebaseDatabase
 import org.json.JSONException
@@ -49,6 +50,9 @@ class MessageFragment : Fragment() {
         val fragView = inflater.inflate(R.layout.fragment_message, container, false)
 
         recyclerView =  fragView.findViewById(R.id.recyclerView) as RecyclerView
+
+        val bottomNavigationView = activity!!.findViewById(R.id.nav_view) as BottomNavigationView
+        bottomNavigationView.visibility = View.VISIBLE
 
         val arg = arguments
         user = arg!!.getString("name")!!
@@ -125,7 +129,7 @@ class MessageFragment : Fragment() {
             //send list of albums to recycler adapter
             Log.i(TAG, messageList.toString())
             recyclerView.layoutManager = LinearLayoutManager(context)
-            val recyclerViewAdapter = MessageRecyclerViewAdapter(context!!, messageList, session)
+            val recyclerViewAdapter = MessageRecyclerViewAdapter(context!!, messageList, session, user)
             recyclerView.adapter = recyclerViewAdapter
         })
     }

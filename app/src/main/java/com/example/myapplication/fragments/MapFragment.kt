@@ -1,6 +1,11 @@
 package com.example.myapplication.fragments
 
+import android.app.Dialog
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.preference.PreferenceManager
@@ -15,32 +20,45 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.ItemizedIconOverlay
 import org.osmdroid.views.overlay.OverlayItem
 import android.util.Log
+import android.view.Window
+import android.widget.ImageView
 import androidx.core.content.ContextCompat.*
 import com.example.myapplication.R
+import com.example.myapplication.datamodel.ReadPhoto
 import com.example.myapplication.datamodel.ReadUser
 import com.example.myapplication.datamodel.UserModel
+import com.example.myapplication.datamodel.PhotoModel
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.database.*
 import org.osmdroid.views.overlay.ItemizedIconOverlay.OnItemGestureListener
 import java.util.*
 import kotlin.collections.ArrayList
+import android.util.Base64
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
 
 class MapFragment : Fragment(), Observer {
 
     private var listener: OnFragmentInteractionListener? = null
     lateinit var items: ItemizedIconOverlay<OverlayItem>
+    lateinit var photoItems: ItemizedIconOverlay<OverlayItem>
     lateinit var markerGestureListener: OnItemGestureListener<OverlayItem>
-    var data: ArrayList<ReadUser> = ArrayList()
+    lateinit var photoGestureListener: OnItemGestureListener<OverlayItem>
+    private var userData: ArrayList<ReadUser> = ArrayList()
+    private var photoData: ArrayList<ReadPhoto> = ArrayList()
     lateinit var mv: MapView
 
     val ref = FirebaseDatabase.getInstance().getReference("user")
-
+    val refPhoto = FirebaseDatabase.getInstance().getReference("photo")
     var session = ""
 
 
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
          val fragView = inflater.inflate(R.layout.fragment_map, container, false)
+
+        val bottomNavigationView = activity!!.findViewById(R.id.nav_view) as BottomNavigationView
+        bottomNavigationView.visibility = View.VISIBLE
 
         Configuration.getInstance().load(activity, PreferenceManager.getDefaultSharedPreferences(activity))
 
@@ -55,13 +73,24 @@ class MapFragment : Fragment(), Observer {
 
         UserModel
         UserModel.addObserver(this)
+        PhotoModel
+        PhotoModel.addObserver(this)
+
+        val cameraBtn = fragView.findViewById(R.id.camera_btn) as FloatingActionButton
+        cameraBtn.setOnClickListener {
+            val transaction = activity!!.supportFragmentManager.beginTransaction()
+            val fragment = CameraFragment.newInstance()
+            transaction.replace(R.id.page_fragment, fragment)
+            transaction.addToBackStack(null)
+            transaction.commit()
+        }
 
         return fragView
     }
 
     private fun mapInit(){
 
-        mv.setBuiltInZoomControls(true)
+        //mv.setBuiltInZoomControls(true)
         mv.setMultiTouchControls(true)
 
         val mvController = mv.controller
@@ -85,60 +114,84 @@ class MapFragment : Fragment(), Observer {
             }
         }
 
+        photoGestureListener = object:OnItemGestureListener<OverlayItem> {
+
+            override fun onItemLongPress(i: Int, item: OverlayItem): Boolean {
+                Toast.makeText(activity, item.snippet, Toast.LENGTH_SHORT).show()
+                return true
+            }
+
+            override fun onItemSingleTapUp(i: Int, item: OverlayItem): Boolean {
+                val dialog = Dialog(context!!)
+                dialog.window!!.requestFeature(Window.FEATURE_NO_TITLE)
+                dialog.window!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+                dialog.setContentView(R.layout.map_photo)
+                dialog.setTitle("Selected Image")
+                dialog.setCancelable(true)
+
+                val decodedString = Base64.decode(item.snippet, Base64.DEFAULT)
+                val bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
+                val image = dialog.findViewById(R.id.map_imageView) as ImageView
+                image.setImageBitmap(Bitmap.createScaledBitmap(bitmap, 200,200, false))
+
+                dialog.show()
+
+                return true
+            }
+        }
+
 
     }
 
 
 
     override fun update(o: Observable?, arg: Any?) {
-        data = UserModel.getData()!!
+        userData = UserModel.getData()!!
+        photoData = PhotoModel.getData()!!
         items = ItemizedIconOverlay<OverlayItem>(activity, ArrayList<OverlayItem>(), markerGestureListener)
+        photoItems = ItemizedIconOverlay<OverlayItem>(activity, ArrayList<OverlayItem>(), photoGestureListener)
         mv.overlays.clear()
         Log.i("MMMMGGG", "session is " + session)
 
-            for (userData in data) {
-                val curSession = userData.session
-                if(curSession == session) {
-                    Log.i("AAAA", userData.name)
+        for (userData in userData) {
+            val curSession = userData.session
+            if (curSession == session) {
+                Log.i("AAAA", userData.name)
 
-                    val curName = userData.name
-                    val curLat = userData.lat.toDouble()
-                    val curLong = userData.long.toDouble()
+                val curName = userData.name
+                val curLat = userData.lat.toDouble()
+                val curLong = userData.long.toDouble()
 
-                    val curLocation = OverlayItem(curName, curName, GeoPoint(curLat, curLong))
-                    val drawable = getDrawable(context!!, R.drawable.user_marker)
-                    curLocation.setMarker(drawable)
-                    items.addItem(curLocation)
-                    mv.overlays.add(items)
-                }
-
-
+                val curLocation = OverlayItem(curName, curName, GeoPoint(curLat, curLong))
+                val drawable = getDrawable(context!!, R.drawable.user_marker)
+                curLocation.setMarker(drawable)
+                items.addItem(curLocation)
+                mv.overlays.add(items)
             }
 
+
+        }
+        for (photoData in photoData) {
+            val curSession = photoData.session
+            if (curSession == session) {
+                Log.i("BBBB", photoData.image)
+
+                val curName = photoData.name
+                val curImage = photoData.image
+                val curLat = photoData.lat.toDouble()
+                val curLong = photoData.long.toDouble()
+
+                val mapPhoto = OverlayItem("Image By"+curName, curImage, GeoPoint(curLat, curLong))
+                val drawable = getDrawable(context!!, R.drawable.ic_image_black_24dp)
+                mapPhoto.setMarker(drawable)
+                photoItems.addItem(mapPhoto)
+                mv.overlays.add(photoItems)
+            }
+
+        }
+
+
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
