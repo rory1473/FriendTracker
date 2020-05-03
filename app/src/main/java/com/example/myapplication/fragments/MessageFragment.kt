@@ -79,10 +79,10 @@ class MessageFragment : Fragment() {
 
                 val URL = "https://fcm.googleapis.com/fcm/send"
                 val request = object : JsonObjectRequest(Request.Method.POST, URL, json, {
-                        response -> Log.d("MUR", "onResponse: ") }, {
-                        error -> Log.d("MUR", "onError: " + error.networkResponse)
-                        }
-                ) { override fun getHeaders(): Map<String, String>{
+                        Log.d("MUR", "onResponse: ") }, {
+                        error -> Log.d("MUR", "onError: " + error.networkResponse) }
+                ) {
+                    override fun getHeaders(): Map<String, String>{
 
                             val header: HashMap<String, String> = HashMap()
                             header.put("content-type", "application/json")
@@ -127,11 +127,14 @@ class MessageFragment : Fragment() {
         viewModel.getMessagesLive().observe(this, Observer<List<Message>> {
             messageList = it
             //send list of albums to recycler adapter
+
             Log.i(TAG, messageList.toString())
-            recyclerView.layoutManager = LinearLayoutManager(context)
-            val recyclerViewAdapter = MessageRecyclerViewAdapter(context!!, messageList, session, user)
-            recyclerView.adapter = recyclerViewAdapter
+
         })
+        recyclerView.layoutManager = LinearLayoutManager(context)
+        val recyclerViewAdapter = MessageRecyclerViewAdapter(context!!, messageList, session, user)
+        recyclerView.adapter = recyclerViewAdapter
+
     }
 
 

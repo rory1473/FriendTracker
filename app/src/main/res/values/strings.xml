@@ -5,7 +5,8 @@
     <string name="title_messages">Messages</string>
     <string name="ok">Okay</string>
     <string name="msg_token">Instance ID token: %s</string>
-    <string name="notification_channel_id" translatable="false">001_channel</string>
+    <string name="notification_channel_id" translatable="false">message_channel</string>
+    <string name="location_channel_id" translatable="false">location_channel</string>
     <string name="msg_token_fmt" translatable="false">InstanceID Token: %s</string>
     <string name="notification_channel_name" translatable="true">Messages</string>
     <string name="fcm_message">Message</string>

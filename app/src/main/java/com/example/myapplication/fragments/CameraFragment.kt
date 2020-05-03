@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -86,16 +87,19 @@ class CameraFragment : Fragment() {
 
         fotoapparat?.takePicture()?.saveToFile(dest)
 
-        val path = File(Environment.getExternalStorageDirectory().toString()+"/skiApp/","newPhoto.jpg")
-            //Log.i("BBBBBBB", path)
-        val bitmap = BitmapFactory.decodeFile(path.absolutePath)
-        val stream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 20, stream)
-        bitmap.recycle()
-        val image = stream.toByteArray()
+        Handler().postDelayed({
+            val path = File(Environment.getExternalStorageDirectory().toString()+"/skiApp/","newPhoto.jpg")
+            val bitmap = BitmapFactory.decodeFile(path.absolutePath)
+            val stream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 20, stream)
+            bitmap.recycle()
+            val image = stream.toByteArray()
 
-        listener?.photoInterface(image)
-        //Log.i(TAG, random)
+            listener?.photoInterface(image)
+        }, 1000)
+
+
+
 
     }
 

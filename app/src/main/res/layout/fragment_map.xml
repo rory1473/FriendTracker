@@ -2,12 +2,48 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
              xmlns:tools="http://schemas.android.com/tools"
              android:layout_width="match_parent"
-             android:layout_height="match_parent" xmlns:app="http://schemas.android.com/apk/res-auto"
+             android:layout_height="match_parent"
+             xmlns:app="http://schemas.android.com/apk/res-auto"
              tools:context=".fragments.MapFragment">
 
     <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
+
+        <Button
+                android:id="@+id/exit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Exit Session"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentStart="true"
+                android:layout_margin="2dp"
+                app:backgroundTint="@android:color/white"/>
+
+
+        <TextView
+                android:id="@+id/session"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:layout_marginEnd="2dp"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
+                android:textSize="32sp"
+                android:textStyle="bold"/>
+
+        <Button
+                android:id="@+id/copy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
+                android:text="Copy to Clipboard"
+                android:layout_marginTop="40dp"
+                android:layout_marginEnd="2dp"
+                app:backgroundTint="@android:color/white"/>
+
+
 
 
     <org.osmdroid.views.MapView

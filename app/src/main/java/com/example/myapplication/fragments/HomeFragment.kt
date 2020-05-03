@@ -9,9 +9,17 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import androidx.lifecycle.lifecycleScope
 import com.example.myapplication.R
+import com.example.myapplication.messaging.MessageDatabase
+import com.example.myapplication.messaging.Session
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.firebase.iid.FirebaseInstanceId
 import kotlinx.android.synthetic.main.fragment_home.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.IOException
 
 class HomeFragment : Fragment() {
 
@@ -19,6 +27,8 @@ class HomeFragment : Fragment() {
     var newSessionID = ""
     var name = ""
     var session = ""
+    private lateinit var db: MessageDatabase
+    private var sessionList = listOf<Session>()
 
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -28,6 +38,36 @@ class HomeFragment : Fragment() {
 
         val bottomNavigationView = activity!!.findViewById(R.id.nav_view) as BottomNavigationView
         bottomNavigationView.visibility = View.VISIBLE
+
+        Thread(Runnable {
+            run{
+                try {
+                    FirebaseInstanceId.getInstance().deleteInstanceId()
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                }
+            }
+        }).start()
+
+        val activity1 = activity as Context
+        db = MessageDatabase.getDatabase(activity1)
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                sessionList = db.messageDAO().getSession()
+            }
+            var sessionID: Int? = null
+            withContext(Dispatchers.IO) {
+                if (sessionList != null) {
+                    for (data in sessionList) {
+                        sessionID = db.messageDAO().deleteSession(data)
+                    }}
+            }
+            var sessionID2: Long? = null
+            val newSession = Session(id = 1, curSession = "")
+            withContext(Dispatchers.IO) {
+                sessionID2 = db.messageDAO().insertSession(newSession)
+            }
+        }
 
         createSessionID(random)
         val btn1 = fragView.findViewById(R.id.btn1) as Button

@@ -1,6 +1,8 @@
 package com.example.myapplication.fragments
 
 import android.app.Dialog
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -34,6 +36,8 @@ import org.osmdroid.views.overlay.ItemizedIconOverlay.OnItemGestureListener
 import java.util.*
 import kotlin.collections.ArrayList
 import android.util.Base64
+import android.widget.Button
+import android.widget.TextView
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 
@@ -47,9 +51,6 @@ class MapFragment : Fragment(), Observer {
     private var userData: ArrayList<ReadUser> = ArrayList()
     private var photoData: ArrayList<ReadPhoto> = ArrayList()
     lateinit var mv: MapView
-
-    val ref = FirebaseDatabase.getInstance().getReference("user")
-    val refPhoto = FirebaseDatabase.getInstance().getReference("photo")
     var session = ""
 
 
@@ -75,6 +76,28 @@ class MapFragment : Fragment(), Observer {
         UserModel.addObserver(this)
         PhotoModel
         PhotoModel.addObserver(this)
+
+        val exit = fragView.findViewById(R.id.exit) as Button
+        exit.setOnClickListener {
+            val transaction = activity!!.supportFragmentManager.beginTransaction()
+            val fragment = HomeFragment.newInstance()
+            transaction.replace(R.id.page_fragment, fragment)
+            transaction.addToBackStack(null)
+            transaction.commit()
+        }
+
+        val sessionText = fragView.findViewById(R.id.session) as TextView
+        sessionText.text = session
+        sessionText.bringToFront()
+
+        val copy = fragView.findViewById(R.id.copy) as Button
+        copy.setOnClickListener {
+            val clipboard = context!!.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText("session", session)
+            clipboard.primaryClip = clip
+            Toast.makeText(activity, "Session Copied to Clipboard", Toast.LENGTH_SHORT).show()
+        }
+
 
         val cameraBtn = fragView.findViewById(R.id.camera_btn) as FloatingActionButton
         cameraBtn.setOnClickListener {
