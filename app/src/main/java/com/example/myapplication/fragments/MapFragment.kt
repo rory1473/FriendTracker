@@ -32,7 +32,6 @@ import com.example.myapplication.datamodel.ReadUser
 import com.example.myapplication.datamodel.UserModel
 import com.example.myapplication.datamodel.PhotoModel
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.firebase.database.*
 import org.osmdroid.views.overlay.ItemizedIconOverlay.OnItemGestureListener
 import java.util.*
 import kotlin.collections.ArrayList
@@ -190,16 +189,16 @@ class MapFragment : Fragment(), Observer {
                 val curLocation = OverlayItem(curName, curName, GeoPoint(curLat, curLong))
 
                 if(curColor == "red") {
-                    drawable = getDrawable(context!!, R.drawable.red_marker)!!
+                    drawable = getDrawable(context!!, R.drawable.red_marker1)!!
                 }
                 else if(curColor == "blue") {
-                    drawable = getDrawable(context!!, R.drawable.blue_marker)!!
+                    drawable = getDrawable(context!!, R.drawable.blue_marker1)!!
                 }
                 else if(curColor == "green") {
-                    drawable = getDrawable(context!!, R.drawable.green_marker)!!
+                    drawable = getDrawable(context!!, R.drawable.green_marker1)!!
                 }
                 else if(curColor == "orange") {
-                    drawable = getDrawable(context!!, R.drawable.orange_marker)!!
+                    drawable = getDrawable(context!!, R.drawable.orange_marker1)!!
                 }
                 else {
                     drawable = getDrawable(context!!, R.drawable.user_marker)!!
@@ -214,7 +213,7 @@ class MapFragment : Fragment(), Observer {
         for (photoData in photoData) {
             val curSession = photoData.session
             if (curSession == session) {
-                Log.i("BBBB", photoData.image)
+                //Log.i("BBBB", photoData.image)
 
                 val curName = photoData.name
                 val curImage = photoData.image

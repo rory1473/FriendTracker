@@ -110,6 +110,9 @@ class HomeFragment : Fragment() {
             session = etSession.text.toString()
             if (name.isEmpty()){
                 etName.error = "Please Enter a Name"
+            }
+            if (session.isEmpty()){
+                etSession.error = "Please Enter the Session"
             }else{
                 listener?.detailsEntered(name, session, color)
                 newSession.isEnabled = false

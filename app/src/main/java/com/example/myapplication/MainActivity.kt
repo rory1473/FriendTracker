@@ -117,8 +117,8 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
 
                 // Log and toast
                 val msg = getString(R.string.msg_token, token).toString()
-                Log.d("main", msg)
-                Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
+                //Log.d("main", msg)
+                //Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
             })
     }
 

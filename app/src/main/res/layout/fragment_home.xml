@@ -23,15 +23,17 @@
                 app:layout_constraintStart_toStartOf="parent"
                />
 
-        <EditText android:layout_height="52dp"
-                  android:layout_width="242dp"
+        <EditText android:layout_height="53dp"
+                  android:layout_width="212dp"
                   android:id="@+id/etName"
                   android:background="@color/light_grey"
                   android:layout_marginTop="68dp"
                   android:layout_marginStart="4dp"
+                  android:paddingStart="5dp"
+                  android:paddingEnd="5dp"
                   app:layout_constraintTop_toTopOf="parent"
                   app:layout_constraintStart_toEndOf="@+id/textName"
-                  />
+        />
 
         <TextView
                 android:text="Select Colour"
@@ -50,7 +52,7 @@
                 android:id="@+id/radioGroup"
                 android:checkedButton="@color/white"
                 android:orientation="horizontal"
-                android:layout_marginStart="60dp"
+                android:layout_marginStart="55dp"
                 app:layout_constraintTop_toBottomOf="@+id/textColor"
                 app:layout_constraintStart_toStartOf="parent">
 
@@ -60,7 +62,6 @@
                     android:layout_margin="15dp"
                     android:background="@drawable/red_circle"
                     android:id="@+id/red"
-                    android:checked="true"
             />
 
             <RadioButton
@@ -99,12 +100,14 @@
                 app:layout_constraintTop_toBottomOf="@+id/radioGroup"
                 app:layout_constraintStart_toStartOf="parent"/>
 
-        <EditText android:layout_height="48dp"
-                  android:layout_width="216dp"
+        <EditText android:layout_height="47dp"
+                  android:layout_width="185dp"
                   android:id="@+id/etSession"
                   android:background="@color/light_grey"
                   android:layout_marginTop="308dp"
                   android:layout_marginStart="4dp"
+                  android:paddingStart="5dp"
+                  android:paddingEnd="5dp"
                   app:layout_constraintTop_toTopOf="parent"
                   app:layout_constraintStart_toEndOf="@+id/enterSession"/>
         <Button
@@ -115,7 +118,7 @@
                 android:background="@drawable/rounded_rectangle"
                 android:textSize="18sp"
                 android:layout_marginTop="40dp"
-                android:layout_marginStart="112dp"
+                android:layout_marginStart="100dp"
                 app:layout_constraintTop_toBottomOf="@+id/etSession"
                 app:layout_constraintStart_toStartOf="parent"/>
 
@@ -136,7 +139,7 @@
                 android:background="@drawable/rounded_rectangle"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                android:layout_marginStart="60dp"
+                android:layout_marginStart="50dp"
                 android:textSize="18sp" android:layout_marginTop="28dp"
                 app:layout_constraintTop_toBottomOf="@+id/or"/>
 
