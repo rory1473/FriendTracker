@@ -5,4 +5,4 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName="session")
 
-data class Session(@PrimaryKey(autoGenerate = false)var id: Int, var curSession: String)
+data class Session(@PrimaryKey(autoGenerate = false)var id: Int, var curSession: String, var user: String)

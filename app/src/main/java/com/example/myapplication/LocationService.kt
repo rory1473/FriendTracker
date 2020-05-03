@@ -28,6 +28,7 @@ class LocationService : Service(), LocationListener {
     var userID = ""
     var name = ""
     var session = ""
+    var color = ""
 
         private set
     override fun onStartCommand(intent: Intent?, startFlags: Int, id: Int): Int {
@@ -39,6 +40,7 @@ class LocationService : Service(), LocationListener {
         userID = intent!!.getStringExtra("ID")
         name = intent.getStringExtra("name")
         session = intent.getStringExtra("session")
+        color = intent.getStringExtra("color")
 
 
 
@@ -87,7 +89,7 @@ class LocationService : Service(), LocationListener {
 
         if (userID != "") {
             val ref = FirebaseDatabase.getInstance().getReference("user")
-            val user = User(userID, name, session, lat, long)
+            val user = User(userID, name, session, lat, long, color)
             ref.child(userID).setValue(user)
         }
         Log.i("lat", lat)

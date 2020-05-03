@@ -10,7 +10,7 @@ class ReadUser(dataSnapshot: DataSnapshot) {
     lateinit var session: String
     lateinit var lat: String
     lateinit var long: String
-
+    lateinit var color: String
 
 
     init{
@@ -22,6 +22,7 @@ class ReadUser(dataSnapshot: DataSnapshot) {
             session = data["session"] as String
             lat = data["lat"] as String
             long = data["long"] as String
+            color = data["markerColor"] as String
 
             Log.i("BBBB", name)
 

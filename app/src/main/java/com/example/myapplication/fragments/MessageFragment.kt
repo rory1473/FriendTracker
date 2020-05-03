@@ -65,56 +65,61 @@ class MessageFragment : Fragment() {
 
         val sendBtn = fragView.findViewById(R.id.send_btn) as FloatingActionButton
         sendBtn.setOnClickListener {
-            val editText = fragView.findViewById(R.id.text1) as EditText
-            message = editText.text.toString()
+            val messageText = fragView.findViewById(R.id.messageText) as EditText
+            message = messageText.text.toString()
+            if (message != "") {
+                messageText.text.clear()
 
-            Log.d("Message", message)
+                Log.d("Message", message)
 
-            val mRequestQue = Volley.newRequestQueue(activity)
+                val mRequestQue = Volley.newRequestQueue(activity)
 
-            val json = JSONObject()
-            try {
-                json.put("to", "/topics/" + session)
-                val notificationObj = JSONObject()
-                notificationObj.put("title", user)
-                notificationObj.put("body", message )
+                val json = JSONObject()
+                try {
+                    json.put("to", "/topics/" + session)
+                    val notificationObj = JSONObject()
+                    notificationObj.put("title", user)
+                    notificationObj.put("body", message)
 
-                //replace notification with data when went send data
-                json.put("notification", notificationObj)
+                    //replace notification with data when went send data
+                    json.put("notification", notificationObj)
 
-                val URL = "https://fcm.googleapis.com/fcm/send"
-                val request = object : JsonObjectRequest(Request.Method.POST, URL, json, {
-                        Log.d("MUR", "onResponse: ") }, {
-                        error -> Log.d("MUR", "onError: " + error.networkResponse) }
-                ) {
-                    override fun getHeaders(): Map<String, String>{
+                    val URL = "https://fcm.googleapis.com/fcm/send"
+                    val request = object : JsonObjectRequest(Request.Method.POST, URL, json, {
+                        Log.d("MUR", "onResponse: ")
+                    }, { error -> Log.d("MUR", "onError: " + error.networkResponse) }
+                    ) {
+                        override fun getHeaders(): Map<String, String> {
 
                             val header: HashMap<String, String> = HashMap()
                             header.put("content-type", "application/json")
-                            header.put("authorization", "key=AAAAHH_Kwx8:APA91bF2bFT0up6nFushgIyDofitdKbvVOQomVuK9ORJHh9WqFakeWGbAIHBqyi95ItVTGFSdJm8ligpKqvHuGoT7U7n7P3dK0aYiM7LgEWe2-oWiozQLNJS5cuyvIH8U4A3P211V5iN")
+                            header.put(
+                                "authorization",
+                                "key=AAAAHH_Kwx8:APA91bF2bFT0up6nFushgIyDofitdKbvVOQomVuK9ORJHh9WqFakeWGbAIHBqyi95ItVTGFSdJm8ligpKqvHuGoT7U7n7P3dK0aYiM7LgEWe2-oWiozQLNJS5cuyvIH8U4A3P211V5iN"
+                            )
                             return header
                         }
+                    }
+
+
+                    mRequestQue.add(request)
+                } catch (e: JSONException) {
+                    e.printStackTrace()
                 }
 
 
-                mRequestQue.add(request)
-            } catch (e: JSONException) {
-                e.printStackTrace()
+                //val ref = FirebaseDatabase.getInstance()("https://projectserver-29dbd.firebaseio.com")
+                //val ref = FirebaseDatabase.getInstance().getReference("messages")
+                // val notifications = ref.child("notificationRequests")
+
+                //val notification: HashMap<String, String> = HashMap()
+                //notification.put("username", user)
+                //notification.put("message", message)
+                //notification.put("session", session)
+
+                //notifications.push().setValue(notification)
             }
-
-
-            //val ref = FirebaseDatabase.getInstance()("https://projectserver-29dbd.firebaseio.com")
-            //val ref = FirebaseDatabase.getInstance().getReference("messages")
-           // val notifications = ref.child("notificationRequests")
-
-            //val notification: HashMap<String, String> = HashMap()
-            //notification.put("username", user)
-            //notification.put("message", message)
-            //notification.put("session", session)
-
-            //notifications.push().setValue(notification)
         }
-
 
         return fragView
     }
@@ -142,7 +147,7 @@ class MessageFragment : Fragment() {
             }
             }
 
-            Log.i("KKKKK", messageList.toString())
+            Log.i("KKKKKKKKKKKKK", messageList.toString())
             val layout = LinearLayoutManager(context)
             layout.stackFromEnd = true     // items gravity sticks to bottom
             layout.reverseLayout = false

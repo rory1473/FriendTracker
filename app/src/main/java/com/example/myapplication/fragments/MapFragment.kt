@@ -8,6 +8,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.preference.PreferenceManager
@@ -52,7 +53,7 @@ class MapFragment : Fragment(), Observer {
     private var photoData: ArrayList<ReadPhoto> = ArrayList()
     lateinit var mv: MapView
     var session = ""
-
+    lateinit var drawable: Drawable
 
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -184,9 +185,25 @@ class MapFragment : Fragment(), Observer {
                 val curName = userData.name
                 val curLat = userData.lat.toDouble()
                 val curLong = userData.long.toDouble()
+                val curColor = userData.color
 
                 val curLocation = OverlayItem(curName, curName, GeoPoint(curLat, curLong))
-                val drawable = getDrawable(context!!, R.drawable.user_marker)
+
+                if(curColor == "red") {
+                    drawable = getDrawable(context!!, R.drawable.red_marker)!!
+                }
+                else if(curColor == "blue") {
+                    drawable = getDrawable(context!!, R.drawable.blue_marker)!!
+                }
+                else if(curColor == "green") {
+                    drawable = getDrawable(context!!, R.drawable.green_marker)!!
+                }
+                else if(curColor == "orange") {
+                    drawable = getDrawable(context!!, R.drawable.orange_marker)!!
+                }
+                else {
+                    drawable = getDrawable(context!!, R.drawable.user_marker)!!
+                }
                 curLocation.setMarker(drawable)
                 items.addItem(curLocation)
                 mv.overlays.add(items)

@@ -18,9 +18,11 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import com.example.myapplication.MainActivity
 import com.example.myapplication.R
+import com.example.myapplication.fragments.MessageFragment
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.*
+import java.util.*
 import kotlin.coroutines.CoroutineContext
 
 class MyFirebaseMessagingService:  FirebaseMessagingService(), CoroutineScope{
@@ -34,32 +36,39 @@ class MyFirebaseMessagingService:  FirebaseMessagingService(), CoroutineScope{
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
 
-
         db = MessageDatabase.getDatabase(application)
         //Log.i("GGG ", curSession)
-        launch{
+        launch {
             withContext(Dispatchers.IO) {
                 session = db.messageDAO().getSessionByID(1)
             }
             val curSession = session!!.curSession
+
             Log.i(" QQQQQ", curSession)
+            //val curTime =  Calendar.getInstance().time
+            // Log.i("time", curTime.toString())
             var messageID: Long? = null
-            val newMessage = Message(user = remoteMessage.notification!!.title!!, message = remoteMessage.notification!!.body!!, session = curSession)
+            val newMessage = Message(
+                user = remoteMessage.notification!!.title!!,
+                message = remoteMessage.notification!!.body!!,
+                session = curSession
+            )//, time = curTime
             withContext(Dispatchers.IO) {
                 messageID = db.messageDAO().insert(newMessage)
             }
             Log.i("message", newMessage.toString())
-        }
+            val name = session!!.user
 
             remoteMessage.data.isNotEmpty().let {
                 Log.i(" YYYYYY", remoteMessage.notification!!.title)
                 Log.i(" ZZZZZZ", remoteMessage.notification!!.body)
 
+                if (remoteMessage.notification!!.title!! != name){
+                    sendNotification(remoteMessage.notification!!.title!!, remoteMessage.notification!!.body!!)
+                }
+            }
 
-            sendNotification(remoteMessage.notification!!.title!!, remoteMessage.notification!!.body!!)
         }
-
-
 //        val notificationBuilder = NotificationCompat.Builder(this, getString(R.string.notification_channel_id))
         //          .setContentTitle(remoteMessage.notification!!.title)
         //        .setContentText(remoteMessage.notification!!.body)
@@ -80,21 +89,24 @@ class MyFirebaseMessagingService:  FirebaseMessagingService(), CoroutineScope{
     override fun onNewToken(token: String) {
         Log.d("Messaging Service", "Refreshed token: $token")
 
-        sendRegistrationToServer(token)
+        //sendRegistrationToServer(token)
     }
 
 
 
-    private fun sendRegistrationToServer(token: String?) {
+    //private fun sendRegistrationToServer(token: String?) {
         // TODO: Implement this method to send token to your app server.
-        Log.d("messaging service", "sendRegistrationTokenToServer($token)")
-    }
+    //    Log.d("messaging service", "sendRegistrationTokenToServer($token)")
+   // }
 
 
     private fun sendNotification(messageTitle: String, messageBody: String) {
         val intent = Intent(this, MainActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        //intent.putExtra("messageFragment", "launch")
         val pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent, PendingIntent.FLAG_ONE_SHOT)
+
+
 
         val channelId = getString(R.string.notification_channel_id)
         val channelName = getString(R.string.notification_channel_name)
@@ -108,6 +120,7 @@ class MyFirebaseMessagingService:  FirebaseMessagingService(), CoroutineScope{
             .setStyle(NotificationCompat.BigTextStyle())
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
+
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 

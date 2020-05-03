@@ -32,6 +32,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.example.myapplication.fragments.HomeFragment
 import com.example.myapplication.fragments.MapFragment
 import com.example.myapplication.fragments.MessageFragment
+import com.example.myapplication.messaging.Message
 import com.example.myapplication.messaging.MessageDatabase
 import com.example.myapplication.messaging.MyFirebaseMessagingService
 import com.example.myapplication.messaging.Session
@@ -44,6 +45,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
+import java.util.*
 
 
 class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, CameraFragment.CameraFragmentListener, MapFragment.OnFragmentInteractionListener, MessageFragment.OnFragmentInteractionListener {
@@ -52,6 +54,8 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
     private val fm = supportFragmentManager
     var session = ""
     var name = ""
+    var color = ""
+    private var messages = listOf<Message>()
     private lateinit var db: MessageDatabase
     lateinit var service: LocationService
     lateinit var serviceConn: ServiceConnection
@@ -64,12 +68,32 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
         val navView: BottomNavigationView = findViewById(R.id.nav_view)
         navView.setOnNavigationItemSelectedListener(onNavigationItemSelectedListener)
 
-        val path = File(Environment.getExternalStorageDirectory().toString()+"/skiApp")
+        val path = File(Environment.getExternalStorageDirectory().toString() + "/skiApp")
         path.mkdirs()
+
+        //val notificationIntent = intent.getStringExtra("messageFragment")
+        //if (notificationIntent != null) {
+        //    if(notificationIntent == "launch"){
+        //        showMessageFragment()
+        //} else {
+            showHomeFragment()
+        //}
+    //}
 
         db = MessageDatabase.getDatabase(application)
 
-        showHomeFragment()
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                messages = db.messageDAO().getMessages()
+            }
+            //checks image exists
+            if (messages != null) {
+                var messageID: Int? = null
+                withContext(Dispatchers.IO) {
+                    messageID = db.messageDAO().delete(messages)
+                }
+            }
+        }
 
         val channelId = getString(R.string.notification_channel_id)
         val channelName = getString(R.string.notification_channel_name)
@@ -115,6 +139,7 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
         startIntent.putExtra("ID", userID)
         startIntent.putExtra("name", name)
         startIntent.putExtra("session", session)
+        startIntent.putExtra("color", color)
         startForegroundService(startIntent)
 
         val bindIntent = Intent(this, LocationService::class.java)
@@ -122,11 +147,13 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
 
     }
 
-    override fun detailsEntered(homeName: String, homeSession: String) {
+    override fun detailsEntered(homeName: String, homeSession: String, homeColor: String) {
         name = homeName
         session = homeSession
+        color = homeColor
         Log.i("name", name)
         Log.i("session", session)
+        Log.i("color", color)
         saveUser()
 
         val mapFragment = MapFragment()
@@ -153,12 +180,12 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
             withContext(Dispatchers.IO) {
                 sessionObject = db.messageDAO().getSessionByID(1)
             }
-
             if (sessionObject != null) {
                 sessionObject!!.curSession = session
-                var photoID: Int? = null
+                sessionObject!!.user = name
+                var sessionID: Int? = null
                 withContext(Dispatchers.IO) {
-                    photoID = db.messageDAO().updateSession(sessionObject!!)
+                    sessionID = db.messageDAO().updateSession(sessionObject!!)
 
                 }
             }

@@ -20,6 +20,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import android.widget.Toast
+import android.widget.RadioGroup
+
+
+
 
 class HomeFragment : Fragment() {
 
@@ -27,17 +32,19 @@ class HomeFragment : Fragment() {
     var newSessionID = ""
     var name = ""
     var session = ""
+    var color = ""
+    var stringRandom = ""
     private lateinit var db: MessageDatabase
     private var sessionList = listOf<Session>()
 
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
        val fragView = inflater.inflate(R.layout.fragment_home, container, false)
-        val random = fragView.findViewById<TextView>(R.id.random) as TextView
-        val etName = fragView.findViewById<EditText>(R.id.etName) as EditText
+        val random = fragView.findViewById(R.id.random) as TextView
+        val etName = fragView.findViewById(R.id.etName) as EditText
 
         val bottomNavigationView = activity!!.findViewById(R.id.nav_view) as BottomNavigationView
-        bottomNavigationView.visibility = View.VISIBLE
+        bottomNavigationView.visibility = View.INVISIBLE
 
         Thread(Runnable {
             run{
@@ -63,33 +70,49 @@ class HomeFragment : Fragment() {
                     }}
             }
             var sessionID2: Long? = null
-            val newSession = Session(id = 1, curSession = "")
+            val newSession = Session(id = 1, curSession = "", user = "")
             withContext(Dispatchers.IO) {
                 sessionID2 = db.messageDAO().insertSession(newSession)
             }
         }
 
         createSessionID(random)
-        val btn1 = fragView.findViewById(R.id.btn1) as Button
-        val btn2 = fragView.findViewById(R.id.btn2) as Button
 
-        btn1.setOnClickListener {
+        val radioGroup = fragView.findViewById(R.id.radioGroup) as RadioGroup
+        radioGroup.setOnCheckedChangeListener { group, checkedId ->
+            if (checkedId == R.id.red) {
+                color = "red"
+            }
+            else if (checkedId == R.id.blue) {
+                color = "blue"
+            }
+            else if (checkedId == R.id.green) {
+                color = "green"
+            }
+            else {
+                color = "orange"
+            }
+        }
+
+        val joinSession = fragView.findViewById(R.id.joinSession) as Button
+        val newSession = fragView.findViewById(R.id.newSession) as Button
+        newSession.setOnClickListener {
             name = etName.text.toString()
             if (name.isEmpty()){
                 etName.error = "Please Enter a Name"
             }else{
-                listener?.detailsEntered(name, newSessionID)
-                    btn1.isEnabled = false
+                listener?.detailsEntered(name, stringRandom, color)
+                    joinSession.isEnabled = false
             }
         }
-        btn2.setOnClickListener {
+        joinSession.setOnClickListener {
             name = etName.text.toString()
             session = etSession.text.toString()
             if (name.isEmpty()){
                 etName.error = "Please Enter a Name"
             }else{
-                listener?.detailsEntered(name, session)
-                btn2.isEnabled = false
+                listener?.detailsEntered(name, session, color)
+                newSession.isEnabled = false
             }
         }
 
@@ -100,15 +123,15 @@ class HomeFragment : Fragment() {
 
     private fun createSessionID(random: TextView) {
         val stringLibrary = ('a'..'z').toList().toTypedArray()
-        newSessionID = (1..6).map { stringLibrary.random() }.joinToString("")
-
+        stringRandom = (1..6).map { stringLibrary.random() }.joinToString("")
+        newSessionID = "New Session ID: "+stringRandom
         random.text = newSessionID
     }
 
 
 
     interface HomeFragmentListener {
-        fun detailsEntered(homeName: String, homeSession: String )
+        fun detailsEntered(homeName: String, homeSession: String , homeColor: String)
 
     }
 

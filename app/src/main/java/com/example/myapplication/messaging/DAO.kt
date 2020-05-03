@@ -19,14 +19,17 @@ interface MessageDAO {
     @Query("SELECT * FROM messages")
     fun getMessagesLive(): LiveData<List<Message>>
 
+    @Query("SELECT * FROM messages")
+    fun getMessages(): List<Message>
+
     @Insert
-    fun insert(images: Message) : Long
+    fun insert(message: Message) : Long
 
     @Update
-    fun update(images: Message) : Int
+    fun update(message: Message) : Int
 
     @Delete
-    fun delete(images: Message) : Int
+    fun delete(message: List<Message>) : Int
 
     @Query("SELECT * FROM session")
     fun getSession(): List<Session>
