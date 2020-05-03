@@ -19,29 +19,25 @@ import com.example.myapplication.R
 class MessageRecyclerViewAdapter(private val c: Context, private val messages: List<Message>, private val session: String, private val user: String) :  RecyclerView.Adapter<MessageRecyclerViewAdapter.MyViewHolder>() {
     //declare class variables
     private val TAG = "MessageRecycler"
-    private var messageList = mutableListOf<Message>()
+    //private var messageList = mutableListOf<Message>()
 
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
-        for(message in messages){
-            if(message.session == session){
-                messageList.add(message)
-            }
-        }
         return MyViewHolder(LayoutInflater.from(c).inflate(R.layout.single_message, parent, false))
     }
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
 
-        if(session == messageList[position].session) {
+        if(session == messages[position].session) {
+            holder.message.gravity = Gravity.START
             holder.message.visibility = View.VISIBLE
 
-            val getUser = messageList[position].user
+            val getUser = messages[position].user
             holder.title.text = getUser
 
             Log.i(TAG, getUser)
-            val getMessage = messageList[position].message
+            val getMessage = messages[position].message
             holder.body.text = getMessage
             holder.body.background = ContextCompat.getDrawable(holder.itemView.context as FragmentActivity, R.drawable.rounded_blue_rectangle)
             Log.i(TAG, getMessage)
@@ -55,7 +51,7 @@ class MessageRecyclerViewAdapter(private val c: Context, private val messages: L
 
     override fun getItemCount(): Int {
         //returns list size
-        return messageList.size
+        return messages.size
     }
 
     class MyViewHolder(view: View) : RecyclerView.ViewHolder(view) {

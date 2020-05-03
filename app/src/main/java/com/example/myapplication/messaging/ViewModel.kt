@@ -11,23 +11,22 @@ import com.example.myapplication.messaging.MessageDatabase
 
 class ViewModel(app: Application): AndroidViewModel(app) {
 
-    //declares variables
+
     var db = MessageDatabase.getDatabase(app)
+
     private var messages: LiveData<List<Message>>
-    //private var images: LiveData<List<Session>>
-    private var session:  LiveData<Session>
-    //private var curSession = ""
+   // private var sessionOb:  Session?
+    //private var session =""
 
     init {
-        //variables are assigned to DAO functions
-        //albums = db.messageDAO().getAllAlbumsLive()
+       // sessionOb = db.messageDAO().getSessionByID(1)
+       // session = sessionOb!!.curSession
         messages = db.messageDAO().getMessagesLive()
-        session = db.messageDAO().getSessionByIDLive(1)
     }
 
-    fun getSessionByIDLive(): LiveData<Session> {
-        return session
-    }
+   // fun getSessionByID(): Session? {
+    //    return sessionOb
+    //}
 
     fun getMessagesLive(): LiveData<List<Message>> {
         return messages

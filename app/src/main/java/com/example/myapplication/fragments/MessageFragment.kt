@@ -7,15 +7,12 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.EditText
 import com.example.myapplication.R
-import android.R.id.message
-import android.app.DownloadManager
-import android.content.ContentValues.TAG
 import android.util.Log
+import android.view.animation.AnimationUtils
+import android.widget.TextView
 import androidx.lifecycle.Observer
-
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -28,9 +25,7 @@ import com.example.myapplication.messaging.MessageRecyclerViewAdapter
 import com.example.myapplication.messaging.ViewModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.firebase.database.FirebaseDatabase
 import org.json.JSONException
-
 import org.json.JSONObject
 
 
@@ -43,7 +38,8 @@ class MessageFragment : Fragment() {
     lateinit var user: String
     lateinit var message: String
     lateinit var recyclerView: RecyclerView
-    private var messageList = listOf<Message>()
+    private var allMessageList = listOf<Message>()
+    private var messageList = mutableListOf<Message>()
     private lateinit var db: MessageDatabase
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -53,6 +49,15 @@ class MessageFragment : Fragment() {
 
         val bottomNavigationView = activity!!.findViewById(R.id.nav_view) as BottomNavigationView
         bottomNavigationView.visibility = View.VISIBLE
+
+        val title = fragView.findViewById(R.id.title) as TextView
+        title.bringToFront()
+
+        val backButton = fragView.findViewById(R.id.back_btn) as FloatingActionButton
+        backButton.setOnClickListener {
+            activity!!.supportFragmentManager.popBackStack()
+            backButton.isEnabled = false
+        }
 
         val arg = arguments
         user = arg!!.getString("name")!!
@@ -125,16 +130,26 @@ class MessageFragment : Fragment() {
         val viewModel = ViewModelProviders.of(activity!!).get(ViewModel::class.java)
         //read live data of albums in view model
         viewModel.getMessagesLive().observe(this, Observer<List<Message>> {
-            messageList = it
+            allMessageList = it
+            Log.i("LLLLLLLLL", allMessageList.toString())
             //send list of albums to recycler adapter
+            for(message in allMessageList){
+                if(messageList.contains(message)){
+                } else{
+                //if(message.session == session){
+                    messageList.add(message)
+               // }
+            }
+            }
 
-            Log.i(TAG, messageList.toString())
-
+            Log.i("KKKKK", messageList.toString())
+            val layout = LinearLayoutManager(context)
+            layout.stackFromEnd = true     // items gravity sticks to bottom
+            layout.reverseLayout = false
+            recyclerView.layoutManager = layout
+            val recyclerViewAdapter = MessageRecyclerViewAdapter(context!!, messageList, session, user)
+            recyclerView.adapter = recyclerViewAdapter
         })
-        recyclerView.layoutManager = LinearLayoutManager(context)
-        val recyclerViewAdapter = MessageRecyclerViewAdapter(context!!, messageList, session, user)
-        recyclerView.adapter = recyclerViewAdapter
-
     }
 
 

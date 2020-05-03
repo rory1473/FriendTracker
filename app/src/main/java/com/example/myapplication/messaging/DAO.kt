@@ -6,14 +6,15 @@ import androidx.room.*
 @Dao
 interface MessageDAO {
 
-    //@Query("SELECT * FROM messages WHERE album=:album")
-    //fun getImageByAlbum(album: Int): List<Message>
 
-    @Query("SELECT * FROM messages WHERE id=:id")
-    fun getImageByID(id: Int): Message?
+    //fun MessageDAO.messages(): LiveData<List<Message>>{
+    //    val sessionOb = getSessionByID(1)
+    //    val session = sessionOb!!.curSession
+   //     var messageList: LiveData<List<Message>>
+    //    messageList = getMessagesLive(session)
+    //    return messageList
+    //}
 
-    @Query("SELECT * FROM messages")
-    fun getAllImages(): List<Message>
 
     @Query("SELECT * FROM messages")
     fun getMessagesLive(): LiveData<List<Message>>
