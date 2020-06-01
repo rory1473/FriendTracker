@@ -19,16 +19,13 @@ import com.example.myapplication.R
 class MessageRecyclerViewAdapter(private val c: Context, private val messages: List<Message>, private val session: String, private val user: String) :  RecyclerView.Adapter<MessageRecyclerViewAdapter.MyViewHolder>() {
     //declare class variables
     private val TAG = "MessageRecycler"
-    //private var messageList = mutableListOf<Message>()
-
-
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
         return MyViewHolder(LayoutInflater.from(c).inflate(R.layout.single_message, parent, false))
     }
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
-
+        //sets messages from list into text views with blue rectangle background and left gravity
         if(session == messages[position].session) {
             holder.message.gravity = Gravity.START
             holder.message.visibility = View.VISIBLE
@@ -42,7 +39,7 @@ class MessageRecyclerViewAdapter(private val c: Context, private val messages: L
             holder.body.background = ContextCompat.getDrawable(holder.itemView.context as FragmentActivity, R.drawable.rounded_blue_rectangle)
             Log.i(TAG, getMessage)
         }
-
+        //sets background to green rectangle and right gravity if the message is sent by yourself
         if(user == messages[position].user){
             holder.message.gravity = Gravity.END
             holder.body.background = ContextCompat.getDrawable(holder.itemView.context as FragmentActivity, R.drawable.rounded_green_rectangle)

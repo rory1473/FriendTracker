@@ -25,7 +25,6 @@ import android.view.LayoutInflater
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
 import com.example.myapplication.datamodel.Photo
-import com.example.myapplication.datamodel.User
 import com.example.myapplication.fragments.CameraFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView.OnNavigationItemSelectedListener
 import com.google.firebase.database.FirebaseDatabase
@@ -34,7 +33,6 @@ import com.example.myapplication.fragments.MapFragment
 import com.example.myapplication.fragments.MessageFragment
 import com.example.myapplication.messaging.Message
 import com.example.myapplication.messaging.MessageDatabase
-import com.example.myapplication.messaging.MyFirebaseMessagingService
 import com.example.myapplication.messaging.Session
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.iid.FirebaseInstanceId
@@ -44,12 +42,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.IOException
-import java.util.*
 
 
 class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, CameraFragment.CameraFragmentListener, MapFragment.OnFragmentInteractionListener, MessageFragment.OnFragmentInteractionListener {
-
+    //declare class variables
     private val TAG = "MainActivity"
     private val fm = supportFragmentManager
     var session = ""
@@ -65,36 +61,35 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
         setContentView(R.layout.activity_main)
         supportActionBar!!.hide()
 
+        // set bottom navigation listener
         val navView: BottomNavigationView = findViewById(R.id.nav_view)
         navView.setOnNavigationItemSelectedListener(onNavigationItemSelectedListener)
 
+        //create file directory for photos
         val path = File(Environment.getExternalStorageDirectory().toString() + "/skiApp")
         path.mkdirs()
 
-        //val notificationIntent = intent.getStringExtra("messageFragment")
-        //if (notificationIntent != null) {
-        //    if(notificationIntent == "launch"){
-        //        showMessageFragment()
-        //} else {
-            showHomeFragment()
-        //}
-    //}
+        showHomeFragment()
 
+        //define database
         db = MessageDatabase.getDatabase(application)
 
+        //clear messages from local database
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
                 messages = db.messageDAO().getMessages()
             }
-            //checks image exists
+            //checks messages exist
             if (messages != null) {
                 var messageID: Int? = null
                 withContext(Dispatchers.IO) {
                     messageID = db.messageDAO().delete(messages)
                 }
+                Log.i(TAG, messageID.toString())
             }
         }
 
+        //initialise message notification channel
         val channelId = getString(R.string.notification_channel_id)
         val channelName = getString(R.string.notification_channel_name)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -105,28 +100,34 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
             notificationManager.createNotificationChannel(channel)
         }
 
+        //initialise firebase
         FirebaseInstanceId.getInstance().instanceId
             .addOnCompleteListener(OnCompleteListener { task ->
                 if (!task.isSuccessful) {
-                    Log.w("main", "getInstanceId failed", task.exception)
+                    Log.w(TAG, "getInstanceId failed", task.exception)
                     return@OnCompleteListener
                 }
 
-                // Get new Instance ID token
-                val token = task.result?.token
-
-                // Log and toast
-                val msg = getString(R.string.msg_token, token).toString()
-                //Log.d("main", msg)
-                //Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
             })
     }
 
 
 
+    //handle intent to show the message fragment upon launching from notification
+    override fun onNewIntent(intent: Intent){
+        super.onNewIntent(intent)
+        val notificationIntent = intent.getStringExtra("messageFragment")
+        if (notificationIntent != null) {
+           if(notificationIntent == "launch"){
+               showMessageFragment()
+        }}
+    }
+
     private fun saveUser(){
+        //get user Firebase reference
         val ref = FirebaseDatabase.getInstance().getReference("user")
         val userID = ref.push().key.toString()
+        //initialise service binder
         serviceConn = object: ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
                 service = ((binder as LocationService.LocationServiceBinder).getService())
@@ -135,6 +136,7 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
             override fun onServiceDisconnected(name: ComponentName?) {
             }}
 
+        //intent to send user details to location service
         val startIntent = Intent(this, LocationService::class.java)
         startIntent.putExtra("ID", userID)
         startIntent.putExtra("name", name)
@@ -142,6 +144,7 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
         startIntent.putExtra("color", color)
         startForegroundService(startIntent)
 
+        //bind service
         val bindIntent = Intent(this, LocationService::class.java)
         bindService(bindIntent, serviceConn,  Context.BIND_AUTO_CREATE)
 
@@ -150,12 +153,19 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
     override fun detailsEntered(homeName: String, homeSession: String, homeColor: String) {
         name = homeName
         session = homeSession
-        color = homeColor
-        Log.i("name", name)
-        Log.i("session", session)
-        Log.i("color", color)
+
+        color = if(homeColor != ""){
+            homeColor
+        } else{
+            "default"
+        }
+
+        Log.i(TAG+"name", name)
+        Log.i(TAG+"session", session)
+        Log.i(TAG+"color", color)
         saveUser()
 
+        //when called from home fragment launch the mpa fragment
         val mapFragment = MapFragment()
         val args = Bundle()
         args.putString("session", session)
@@ -165,6 +175,7 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
         transaction.addToBackStack(null)
         transaction.commit()
 
+        //subscribe user to messaging group
         FirebaseMessaging.getInstance().subscribeToTopic(session)
             .addOnCompleteListener { task ->
                 var msg = "connected to group"
@@ -175,6 +186,7 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
                 Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
             }
 
+        //set current session in session database table
         var sessionObject: Session? = null
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
@@ -186,18 +198,20 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
                 var sessionID: Int? = null
                 withContext(Dispatchers.IO) {
                     sessionID = db.messageDAO().updateSession(sessionObject!!)
-
                 }
+                Log.i(TAG, sessionID.toString())
             }
         }
     }
 
 
     override fun photoInterface(newPhoto: ByteArray) {
+        //get location from location service
         val location = service.curLocation
         val lat = location?.latitude.toString()
         val long = location?.longitude.toString()
 
+        //convert byte array to string and upload to Firebase
         val encodedImage = Base64.encodeToString(newPhoto , Base64.DEFAULT)
         val ref = FirebaseDatabase.getInstance().getReference("photo")
         val photoID = ref.push().key.toString()
@@ -207,14 +221,14 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
         }
     }
 
-
+    //empty fragment interface required by main activity
     override fun onFragmentInteraction(uri: Uri) {
 
     }
 
 
     private val onNavigationItemSelectedListener = OnNavigationItemSelectedListener { item ->
-
+        //set navigation fragment calls
         when (item.itemId) {
             R.id.navigation_map -> {
                 showMapFragment()
@@ -231,6 +245,7 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
 
 
     private fun showHomeFragment() {
+        //set fragment as HomeFragment
         val transaction = fm.beginTransaction()
         val fragment = HomeFragment.newInstance()
         transaction.replace(R.id.page_fragment, fragment)
@@ -240,6 +255,7 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
     }
 
     private fun showMapFragment() {
+        //set fragment as MapFragment
         val mapFragment = MapFragment()
         val args = Bundle()
         args.putString("session", session)
@@ -251,6 +267,7 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
     }
 
     private fun showMessageFragment() {
+        //set fragment as MessageFragment
         val transaction = fm.beginTransaction()
         val fragment = MessageFragment.newInstance()
         val args = Bundle()
@@ -267,6 +284,7 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
 
     override fun onStart() {
         super.onStart()
+        //call getPermissions() on startup
         getPermissions()
     }
 
@@ -276,8 +294,6 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
             checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)== PackageManager.PERMISSION_GRANTED &&
             checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)== PackageManager.PERMISSION_GRANTED&&
             checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_GRANTED){
-            //val mgr = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-           // mgr.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, this)
         }
         else{
             //request permissions
@@ -290,7 +306,8 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
         //if all permissions are granted call getPermissions, otherwise alert user and loop back to getPermissions until user grants permissions
         when(requestCode) {
             0 -> {
-                if(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED && grantResults[2] == PackageManager.PERMISSION_GRANTED && grantResults[3] == PackageManager.PERMISSION_GRANTED) {
+                if(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED &&
+                    grantResults[2] == PackageManager.PERMISSION_GRANTED && grantResults[3] == PackageManager.PERMISSION_GRANTED) {
                     getPermissions()
 
                 } else {
@@ -315,6 +332,7 @@ class MainActivity : AppCompatActivity(),  HomeFragment.HomeFragmentListener, Ca
 
     override fun onDestroy() {
         super.onDestroy()
+        //unbind and stop location service
         unbindService(serviceConn)
         val stopIntent = Intent(this, LocationService::class.java)
         stopService(stopIntent)

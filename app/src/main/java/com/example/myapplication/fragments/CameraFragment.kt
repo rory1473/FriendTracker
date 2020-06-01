@@ -81,25 +81,25 @@ class CameraFragment : Fragment() {
     }
 
     private fun takePhoto(){
-
+        //file destination set
         val sd = Environment.getExternalStorageDirectory().toString()+"/skiApp/"
         val dest = File(sd, "newPhoto.jpg")
 
+        //photo is saved to destination
         fotoapparat?.takePicture()?.saveToFile(dest)
 
+        //delay allows time for save to be saved before being read back in
         Handler().postDelayed({
+            //file is read back in and converted to a compressed byte array stream
             val path = File(Environment.getExternalStorageDirectory().toString()+"/skiApp/","newPhoto.jpg")
             val bitmap = BitmapFactory.decodeFile(path.absolutePath)
             val stream = ByteArrayOutputStream()
             bitmap.compress(Bitmap.CompressFormat.JPEG, 20, stream)
             bitmap.recycle()
             val image = stream.toByteArray()
-
+            //byte array is sent to interface
             listener?.photoInterface(image)
         }, 1000)
-
-
-
 
     }
 
@@ -116,7 +116,6 @@ class CameraFragment : Fragment() {
         else {cameraStatus = CameraState.BACK
         }
     }
-
 
     private fun changeFlash(){
         //turns flash on and off

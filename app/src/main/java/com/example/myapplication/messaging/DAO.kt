@@ -6,24 +6,14 @@ import androidx.room.*
 @Dao
 interface MessageDAO {
 
-
-    //fun MessageDAO.messages(): LiveData<List<Message>>{
-    //    val sessionOb = getSessionByID(1)
-    //    val session = sessionOb!!.curSession
-   //     var messageList: LiveData<List<Message>>
-    //    messageList = getMessagesLive(session)
-    //    return messageList
-    //}
-
-
     @Query("SELECT * FROM messages")
     fun getMessagesLive(): LiveData<List<Message>>
 
-    @Query("SELECT * FROM messages")
-    fun getMessages(): List<Message>
-
     @Insert
     fun insert(message: Message) : Long
+
+    @Query("SELECT * FROM messages")
+    fun getMessages(): List<Message>
 
     @Update
     fun update(message: Message) : Int

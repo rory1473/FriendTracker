@@ -31,8 +31,8 @@ import org.json.JSONObject
 
 
 class MessageFragment : Fragment() {
-
-
+    //declare class variables
+    private val TAG = "MessageFragment"
     private var listener: OnFragmentInteractionListener? = null
     lateinit var session: String
     lateinit var user: String
@@ -46,13 +46,14 @@ class MessageFragment : Fragment() {
         val fragView = inflater.inflate(R.layout.fragment_message, container, false)
 
         recyclerView =  fragView.findViewById(R.id.recyclerView) as RecyclerView
-
+        //set bottom navigation as visible
         val bottomNavigationView = activity!!.findViewById(R.id.nav_view) as BottomNavigationView
         bottomNavigationView.visibility = View.VISIBLE
 
         val title = fragView.findViewById(R.id.title) as TextView
         title.bringToFront()
 
+        //set back button to return to previous fragment
         val backButton = fragView.findViewById(R.id.back_btn) as FloatingActionButton
         backButton.setOnClickListener {
             activity!!.supportFragmentManager.popBackStack()
@@ -63,34 +64,33 @@ class MessageFragment : Fragment() {
         user = arg!!.getString("name")!!
         session = arg.getString("session")!!
 
+        //on click listener sends message to group chat
         val sendBtn = fragView.findViewById(R.id.send_btn) as FloatingActionButton
         sendBtn.setOnClickListener {
             val messageText = fragView.findViewById(R.id.messageText) as EditText
             message = messageText.text.toString()
             if (message != "") {
                 messageText.text.clear()
-
-                Log.d("Message", message)
-
+                Log.d(TAG, message)
+                //set request queue
                 val mRequestQue = Volley.newRequestQueue(activity)
-
+                //post request put into JSON object
                 val json = JSONObject()
                 try {
                     json.put("to", "/topics/" + session)
                     val notificationObj = JSONObject()
                     notificationObj.put("title", user)
                     notificationObj.put("body", message)
-
-                    //replace notification with data when went send data
                     json.put("notification", notificationObj)
 
+                    //receiving firebase address handles post request
                     val URL = "https://fcm.googleapis.com/fcm/send"
                     val request = object : JsonObjectRequest(Request.Method.POST, URL, json, {
-                        Log.d("MUR", "onResponse: ")
+                        Log.d(TAG, "onResponse: ")
                     }, { error -> Log.d("MUR", "onError: " + error.networkResponse) }
                     ) {
                         override fun getHeaders(): Map<String, String> {
-
+                            //set header values
                             val header: HashMap<String, String> = HashMap()
                             header.put("content-type", "application/json")
                             header.put(
@@ -100,24 +100,11 @@ class MessageFragment : Fragment() {
                             return header
                         }
                     }
-
-
                     mRequestQue.add(request)
                 } catch (e: JSONException) {
+                    //display error on console
                     e.printStackTrace()
                 }
-
-
-                //val ref = FirebaseDatabase.getInstance()("https://projectserver-29dbd.firebaseio.com")
-                //val ref = FirebaseDatabase.getInstance().getReference("messages")
-                // val notifications = ref.child("notificationRequests")
-
-                //val notification: HashMap<String, String> = HashMap()
-                //notification.put("username", user)
-                //notification.put("message", message)
-                //notification.put("session", session)
-
-                //notifications.push().setValue(notification)
             }
         }
 
@@ -133,21 +120,19 @@ class MessageFragment : Fragment() {
 
         //define view model
         val viewModel = ViewModelProviders.of(activity!!).get(ViewModel::class.java)
-        //read live data of albums in view model
+        //read live data of messages in view model
         viewModel.getMessagesLive().observe(this, Observer<List<Message>> {
             allMessageList = it
-            Log.i("LLLLLLLLL", allMessageList.toString())
-            //send list of albums to recycler adapter
+            Log.i(TAG, allMessageList.toString())
+            //send list of messages to recycler adapter
             for(message in allMessageList){
                 if(messageList.contains(message)){
                 } else{
-                //if(message.session == session){
                     messageList.add(message)
-               // }
             }
             }
 
-            Log.i("KKKKKKKKKKKKK", messageList.toString())
+            Log.i(TAG, messageList.toString())
             val layout = LinearLayoutManager(context)
             layout.stackFromEnd = true     // items gravity sticks to bottom
             layout.reverseLayout = false
@@ -156,7 +141,6 @@ class MessageFragment : Fragment() {
             recyclerView.adapter = recyclerViewAdapter
         })
     }
-
 
 
     override fun onAttach(context: Context) {
@@ -172,8 +156,6 @@ class MessageFragment : Fragment() {
         super.onDetach()
         listener = null
     }
-
-
 
     interface OnFragmentInteractionListener {
 

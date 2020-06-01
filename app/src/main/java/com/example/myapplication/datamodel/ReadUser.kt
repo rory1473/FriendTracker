@@ -15,6 +15,7 @@ class ReadUser(dataSnapshot: DataSnapshot) {
 
     init{
         try{
+            //sets snapshot into hash map where the values can be stored from
             @Suppress("UNCHECKED_CAST")
             val data: HashMap<String, Any> = dataSnapshot.value as HashMap<String, Any>
             id = dataSnapshot.key ?: ""
@@ -24,7 +25,7 @@ class ReadUser(dataSnapshot: DataSnapshot) {
             long = data["long"] as String
             color = data["markerColor"] as String
 
-            Log.i("BBBB", name)
+            Log.i("ReadUser", name)
 
         }catch(e: Exception){
             e.printStackTrace()

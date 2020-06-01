@@ -10,20 +10,23 @@ object PhotoModel: Observable() {
     private var mValueDataListener: ValueEventListener? = null
     private var mPhotoList: ArrayList<ReadPhoto>? = ArrayList()
 
+    //get firebase database reference to photos
     private fun getDatabaseRef(): DatabaseReference?{
         return FirebaseDatabase.getInstance().reference.child("photo")
     }
 
     init{
+        //remove previous listener
         if(mValueDataListener != null){
             getDatabaseRef()?.removeEventListener(mValueDataListener!!)
         }
         mValueDataListener = null
-
+        //listener object calls when data inside the database is changed
         mValueDataListener = object: ValueEventListener{
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 try{
                     val data: ArrayList<ReadPhoto> = ArrayList()
+                    //add each child snapshot to the array through the ReadUser class
                     if (dataSnapshot != null){
                         for (postSnapshot: DataSnapshot in dataSnapshot.children) {
                             try{
@@ -38,6 +41,7 @@ object PhotoModel: Observable() {
                         }
                         mPhotoList = data
                         Log.i("read data", "number of read photos: " + mPhotoList!!)
+                        //notifies MapFragment that data has changed
                         setChanged()
                         notifyObservers()
                     }
@@ -52,11 +56,11 @@ object PhotoModel: Observable() {
             }
 
         }
-
+        //listener is added to database
         getDatabaseRef()?.addValueEventListener(mValueDataListener!!)
 
     }
-
+    //function to call photo array list from MapFragment
     fun getData():ArrayList<ReadPhoto>?{
         return mPhotoList
     }

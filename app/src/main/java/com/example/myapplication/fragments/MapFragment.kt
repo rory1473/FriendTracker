@@ -42,7 +42,8 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 
 
 class MapFragment : Fragment(), Observer {
-
+    //declare class variables
+    private val TAG = "MapFragment"
     private var listener: OnFragmentInteractionListener? = null
     lateinit var items: ItemizedIconOverlay<OverlayItem>
     lateinit var photoItems: ItemizedIconOverlay<OverlayItem>
@@ -56,27 +57,30 @@ class MapFragment : Fragment(), Observer {
 
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-         val fragView = inflater.inflate(R.layout.fragment_map, container, false)
-
+        val fragView = inflater.inflate(R.layout.fragment_map, container, false)
+        //set bottom navigation as visible
         val bottomNavigationView = activity!!.findViewById(R.id.nav_view) as BottomNavigationView
         bottomNavigationView.visibility = View.VISIBLE
-
+        //configuration for OSMDroid
         Configuration.getInstance().load(activity, PreferenceManager.getDefaultSharedPreferences(activity))
-
+        //define map view
         val map = fragView.findViewById(R.id.map1) as MapView
         mv = map
 
         val arg = arguments
         session = arg!!.getString("session")!!
 
+        //call to set map and marker initialise functions
         markerInit()
         mapInit()
 
+        //UserModel class is called with an observer to listen for any changes
         UserModel
         UserModel.addObserver(this)
         PhotoModel
         PhotoModel.addObserver(this)
 
+        //exit button returns user to HomeFragment
         val exit = fragView.findViewById(R.id.exit) as Button
         exit.setOnClickListener {
             val transaction = activity!!.supportFragmentManager.beginTransaction()
@@ -90,6 +94,7 @@ class MapFragment : Fragment(), Observer {
         sessionText.text = session
         sessionText.bringToFront()
 
+        //copy button uses the ClipBoard manager to add the session ID to the device clipboard
         val copy = fragView.findViewById(R.id.copy) as Button
         copy.setOnClickListener {
             val clipboard = context!!.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -97,8 +102,7 @@ class MapFragment : Fragment(), Observer {
             clipboard.primaryClip = clip
             Toast.makeText(activity, "Session Copied to Clipboard", Toast.LENGTH_SHORT).show()
         }
-
-
+        //button takes you to camera fragment
         val cameraBtn = fragView.findViewById(R.id.camera_btn) as FloatingActionButton
         cameraBtn.setOnClickListener {
             val transaction = activity!!.supportFragmentManager.beginTransaction()
@@ -112,10 +116,8 @@ class MapFragment : Fragment(), Observer {
     }
 
     private fun mapInit(){
-
-        //mv.setBuiltInZoomControls(true)
+        //set touch controls and default view
         mv.setMultiTouchControls(true)
-
         val mvController = mv.controller
         mvController.setZoom(16)
         mvController.setCenter(GeoPoint( 50.909698, -1.404351))
@@ -124,8 +126,10 @@ class MapFragment : Fragment(), Observer {
 
 
     private fun markerInit() {
+        //on marker clicked actions
         markerGestureListener = object:OnItemGestureListener<OverlayItem> {
 
+            //on user marker interaction a toast displays the users name
             override fun onItemLongPress(i: Int, item: OverlayItem): Boolean {
                 Toast.makeText(activity, item.snippet, Toast.LENGTH_SHORT).show()
                 return true
@@ -143,7 +147,7 @@ class MapFragment : Fragment(), Observer {
                 Toast.makeText(activity, item.snippet, Toast.LENGTH_SHORT).show()
                 return true
             }
-
+            //on single tap on a photo marker the image is displayed in a dialog box
             override fun onItemSingleTapUp(i: Int, item: OverlayItem): Boolean {
                 val dialog = Dialog(context!!)
                 dialog.window!!.requestFeature(Window.FEATURE_NO_TITLE)
@@ -152,6 +156,7 @@ class MapFragment : Fragment(), Observer {
                 dialog.setTitle("Selected Image")
                 dialog.setCancelable(true)
 
+                //string is decoded to byte array and then decoded back to a bitmap and set in image view
                 val decodedString = Base64.decode(item.snippet, Base64.DEFAULT)
                 val bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
                 val image = dialog.findViewById(R.id.map_imageView) as ImageView
@@ -167,19 +172,22 @@ class MapFragment : Fragment(), Observer {
     }
 
 
-
+    //Observable function displays and updates markers on map
     override fun update(o: Observable?, arg: Any?) {
+        //data is called from the Model classes
         userData = UserModel.getData()!!
         photoData = PhotoModel.getData()!!
+        //user marker and photo marker overlay layers are set with gesture listeners
         items = ItemizedIconOverlay<OverlayItem>(activity, ArrayList<OverlayItem>(), markerGestureListener)
         photoItems = ItemizedIconOverlay<OverlayItem>(activity, ArrayList<OverlayItem>(), photoGestureListener)
+        //the overlays are clear every the function is called ti prevent trail of markers on map
         mv.overlays.clear()
-        Log.i("MMMMGGG", "session is " + session)
+        Log.i(TAG, "session is " + session)
 
         for (userData in userData) {
             val curSession = userData.session
             if (curSession == session) {
-                Log.i("AAAA", userData.name)
+                Log.i(TAG, userData.name)
 
                 val curName = userData.name
                 val curLat = userData.lat.toDouble()
@@ -188,6 +196,7 @@ class MapFragment : Fragment(), Observer {
 
                 val curLocation = OverlayItem(curName, curName, GeoPoint(curLat, curLong))
 
+                //marker colour for each user is set using value from firebase database
                 if(curColor == "red") {
                     drawable = getDrawable(context!!, R.drawable.red_marker1)!!
                 }
@@ -204,6 +213,7 @@ class MapFragment : Fragment(), Observer {
                     drawable = getDrawable(context!!, R.drawable.user_marker)!!
                 }
                 curLocation.setMarker(drawable)
+                //markers are added to overlay and overlay is added to map
                 items.addItem(curLocation)
                 mv.overlays.add(items)
             }
@@ -213,7 +223,6 @@ class MapFragment : Fragment(), Observer {
         for (photoData in photoData) {
             val curSession = photoData.session
             if (curSession == session) {
-                //Log.i("BBBB", photoData.image)
 
                 val curName = photoData.name
                 val curImage = photoData.image

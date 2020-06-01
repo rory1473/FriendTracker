@@ -23,6 +23,7 @@ import com.google.firebase.database.FirebaseDatabase
 
 
 class LocationService : Service(), LocationListener {
+    private val TAG = "LocationService"
     var curLocation: Location? = null
     var channelID = "location_channel"
     var userID = ""
@@ -32,18 +33,18 @@ class LocationService : Service(), LocationListener {
 
         private set
     override fun onStartCommand(intent: Intent?, startFlags: Int, id: Int): Int {
+        //check permission and request location from LocationManager
         if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_GRANTED) {
             val mgr = getSystemService(Context.LOCATION_SERVICE) as LocationManager
             mgr.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, this)
         }
-
+        //receive intent values from MainActivity
         userID = intent!!.getStringExtra("ID")
         name = intent.getStringExtra("name")
         session = intent.getStringExtra("session")
         color = intent.getStringExtra("color")
 
-
-
+        //build service notification
         createNotificationChannel()
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0)
@@ -54,11 +55,11 @@ class LocationService : Service(), LocationListener {
             .build()
         startForeground(1, notification)
 
-
         return START_STICKY
     }
 
     private fun createNotificationChannel() {
+        //initialise service notification channel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val serviceChannel = NotificationChannel(channelID, "Location Service Channel", NotificationManager.IMPORTANCE_DEFAULT)
             val manager = getSystemService(NotificationManager::class.java)
@@ -76,24 +77,24 @@ class LocationService : Service(), LocationListener {
     }
 
     override fun onBind(intent: Intent): IBinder {
-
         return LocationServiceBinder()
     }
 
 
     override fun onLocationChanged(newLoc: Location) {
         curLocation = newLoc
-
+        //set variables as current location
         val lat = newLoc.latitude.toString()
         val long = newLoc.longitude.toString()
 
+        //upload user class to firebase
         if (userID != "") {
             val ref = FirebaseDatabase.getInstance().getReference("user")
             val user = User(userID, name, session, lat, long, color)
             ref.child(userID).setValue(user)
         }
-        Log.i("lat", lat)
-        Log.i("long", long)
+        Log.i(TAG+" lat", lat)
+        Log.i(TAG+" long", long)
     }
 
     override fun onProviderDisabled(provider: String) {

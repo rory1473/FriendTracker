@@ -3,30 +3,22 @@ package com.example.myapplication.messaging
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.PendingIntent.getActivity
 import android.content.Context
 import android.content.Intent
-
-import android.content.Intent.getIntent
 import android.media.RingtoneManager
 import android.os.Build
-import android.os.Bundle
 import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
-import androidx.lifecycle.Observer
-import androidx.lifecycle.lifecycleScope
 import com.example.myapplication.MainActivity
 import com.example.myapplication.R
-import com.example.myapplication.fragments.MessageFragment
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.*
-import java.util.*
 import kotlin.coroutines.CoroutineContext
 
 class MyFirebaseMessagingService:  FirebaseMessagingService(), CoroutineScope{
-
+    //declare class variables
+    private val TAG = "MessagingService"
     private lateinit var db: MessageDatabase
     private var session: Session? = null
     private var job = Job()
@@ -37,77 +29,53 @@ class MyFirebaseMessagingService:  FirebaseMessagingService(), CoroutineScope{
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
 
         db = MessageDatabase.getDatabase(application)
-        //Log.i("GGG ", curSession)
+        //get session from database
         launch {
             withContext(Dispatchers.IO) {
                 session = db.messageDAO().getSessionByID(1)
             }
             val curSession = session!!.curSession
+            Log.i(TAG+" Session", curSession)
 
-            Log.i(" QQQQQ", curSession)
-            //val curTime =  Calendar.getInstance().time
-            // Log.i("time", curTime.toString())
+            //add new message to database
             var messageID: Long? = null
             val newMessage = Message(
                 user = remoteMessage.notification!!.title!!,
                 message = remoteMessage.notification!!.body!!,
                 session = curSession
-            )//, time = curTime
+            )
             withContext(Dispatchers.IO) {
                 messageID = db.messageDAO().insert(newMessage)
             }
-            Log.i("message", newMessage.toString())
+            Log.i(TAG+" message", newMessage.toString())
+            Log.i(TAG+" messageID", messageID.toString())
             val name = session!!.user
 
             remoteMessage.data.isNotEmpty().let {
-                Log.i(" YYYYYY", remoteMessage.notification!!.title)
-                Log.i(" ZZZZZZ", remoteMessage.notification!!.body)
-
+                Log.i(TAG+" title", remoteMessage.notification!!.title)
+                Log.i(TAG+" body", remoteMessage.notification!!.body)
+                //if message received from another user then pass values to sendNotification
                 if (remoteMessage.notification!!.title!! != name){
                     sendNotification(remoteMessage.notification!!.title!!, remoteMessage.notification!!.body!!)
                 }
             }
 
         }
-//        val notificationBuilder = NotificationCompat.Builder(this, getString(R.string.notification_channel_id))
-        //          .setContentTitle(remoteMessage.notification!!.title)
-        //        .setContentText(remoteMessage.notification!!.body)
-        //          .setPriority(NotificationCompat.PRIORITY_HIGH)
-        //         .setStyle(NotificationCompat.BigTextStyle())
-        //         .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-        //         .setSmallIcon(R.mipmap.ic_launcher)
-        //          .setAutoCancel(true)
-//
-        //     val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        //     notificationManager.notify(0, notificationBuilder.build())
-
 
     }
-
-
 
     override fun onNewToken(token: String) {
-        Log.d("Messaging Service", "Refreshed token: $token")
-
-        //sendRegistrationToServer(token)
+        Log.d(TAG, "Refreshed token: $token")
     }
 
-
-
-    //private fun sendRegistrationToServer(token: String?) {
-        // TODO: Implement this method to send token to your app server.
-    //    Log.d("messaging service", "sendRegistrationTokenToServer($token)")
-   // }
-
-
     private fun sendNotification(messageTitle: String, messageBody: String) {
+        //set pending intent to launch message fragment
         val intent = Intent(this, MainActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        //intent.putExtra("messageFragment", "launch")
-        val pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent, PendingIntent.FLAG_ONE_SHOT)
+        intent.putExtra("messageFragment", "launch")
+        val pendingIntent = PendingIntent.getActivity(this, 0 , intent, PendingIntent.FLAG_ONE_SHOT)
 
-
-
+        //build message notification
         val channelId = getString(R.string.notification_channel_id)
         val channelName = getString(R.string.notification_channel_name)
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
@@ -121,15 +89,14 @@ class MyFirebaseMessagingService:  FirebaseMessagingService(), CoroutineScope{
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
 
-
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
+        //check system version compatibility and create channel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH)
             notificationManager.createNotificationChannel(channel)
         }
-
-        notificationManager.notify(0 /* ID of notification */, notificationBuilder.build())
+        //display notification
+        notificationManager.notify(0 , notificationBuilder.build())
     }
 
 
